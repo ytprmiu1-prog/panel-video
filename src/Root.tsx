@@ -8,6 +8,7 @@ import {
   useVideoConfig,
 } from 'remotion';
 import {StokHabis, stokHabisDefaultProps} from './StokHabis';
+import {PromoNuyaPay, promoDefaultProps, DURASI_PROMO} from './PromoNuyaPay';
 
 type Props = {title: string; subtitle: string; bgColor: string};
 
@@ -143,6 +144,15 @@ export const RemotionRoot: React.FC = () => (
       width={1080}
       height={1920}
       defaultProps={stokHabisDefaultProps}
+    />
+    <Composition
+      id="PromoNuyaPay"
+      component={PromoNuyaPay}
+      durationInFrames={DURASI_PROMO}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={promoDefaultProps}
     />
   </>
 );

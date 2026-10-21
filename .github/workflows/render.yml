@@ -2,6 +2,16 @@ name: Render video
 on:
   workflow_dispatch:
     inputs:
+      style:
+        description: Style video
+        type: choice
+        default: MyComp
+        options:
+          - MyComp
+          - Gradasi
+          - Kartu
+          - Kinetik
+          - StokHabis
       title:
         description: Judul
         default: Halo Dunia
@@ -25,7 +35,9 @@ jobs:
       - run: echo "$WORKFLOW_INPUT" > input-props.json
         env:
           WORKFLOW_INPUT: ${{ toJson(github.event.inputs) }}
-      - run: npx remotion render src/index.ts MyComp out/video.mp4 --props=./input-props.json
+      - run: npx remotion render src/index.ts "$STYLE" out/video.mp4 --props=./input-props.json
+        env:
+          STYLE: ${{ github.event.inputs.style || 'MyComp' }}
       - run: gh release create "video-${{ github.run_number }}" out/video.mp4 --title "Video ${{ github.run_number }}" --notes "$NOTES"
         env:
           GH_TOKEN: ${{ github.token }}

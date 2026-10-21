@@ -7,6 +7,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
+import {StokHabis, stokHabisDefaultProps} from './StokHabis';
 
 type Props = {title: string; subtitle: string; bgColor: string};
 
@@ -134,5 +135,14 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="Gradasi" component={Gradasi} {...ukuran} defaultProps={awal} />
     <Composition id="Kartu" component={Kartu} {...ukuran} defaultProps={awal} />
     <Composition id="Kinetik" component={Kinetik} {...ukuran} defaultProps={awal} />
+    <Composition
+      id="StokHabis"
+      component={StokHabis}
+      durationInFrames={210}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={stokHabisDefaultProps}
+    />
   </>
 );

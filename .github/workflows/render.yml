@@ -12,6 +12,7 @@ on:
           - Kartu
           - Kinetik
           - StokHabis
+          - PromoNuyaPay
       title:
         description: Judul
         default: Halo Dunia

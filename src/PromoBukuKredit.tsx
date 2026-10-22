@@ -165,7 +165,7 @@ const Solusi: React.FC = () => {
         <KataPop kata={['Ganti', 'ke...']} ukuran={96} />
       </div>
       <Img
-        src={staticFile('logo.png')}
+        src={staticFile('logo.jpg')}
         style={{
           position: 'absolute',
           top: 740,
@@ -1447,7 +1447,7 @@ const Ajakan: React.FC<{alamat: string}> = ({alamat}) => {
   return (
     <Latar glow={warna.hijau}>
       <Img
-        src={staticFile('logo.png')}
+        src={staticFile('logo.jpg')}
         style={{
           position: 'absolute',
           top: 170,

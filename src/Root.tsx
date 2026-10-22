@@ -9,6 +9,7 @@ import {
 } from 'remotion';
 import {StokHabis, stokHabisDefaultProps} from './StokHabis';
 import {PromoNuyaPay, promoDefaultProps, DURASI_PROMO} from './PromoNuyaPay';
+import {PromoBukuKredit, promoBKDefaultProps, DURASI_BK} from './PromoBukuKredit';
 
 type Props = {title: string; subtitle: string; bgColor: string};
 

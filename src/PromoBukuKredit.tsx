@@ -1,5 +1,5 @@
 import React from 'react';
-import {interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
+import {Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {
   Adegan,
   AngkaNaik,
@@ -164,26 +164,20 @@ const Solusi: React.FC = () => {
       <div style={posisi(430)}>
         <KataPop kata={['Ganti', 'ke...']} ukuran={96} />
       </div>
-      <div
+      <Img
+        src={staticFile('logo.jpg')}
         style={{
           position: 'absolute',
-          top: 760,
-          left: 390,
-          width: 300,
-          height: 300,
-          borderRadius: 76,
-          background: `linear-gradient(135deg, ${warna.biru}, ${warna.hijau})`,
+          top: 740,
+          left: 370,
+          width: 340,
+          height: 340,
+          objectFit: 'cover',
+          borderRadius: 80,
           boxShadow: '0 0 120px rgba(0,97,255,0.6)',
-          color: 'white',
-          fontSize: 190,
-          fontWeight: 900,
-          textAlign: 'center',
-          lineHeight: '300px',
           transform: `scale(${logo}) rotate(${(1 - logo) * -25}deg)`,
         }}
-      >
-        B
-      </div>
+      />
       <div
         style={{
           ...posisi(1130),
@@ -1452,6 +1446,21 @@ const Ajakan: React.FC<{alamat: string}> = ({alamat}) => {
   const sub = spring({frame: frame - 30, fps, config: {damping: 12}});
   return (
     <Latar glow={warna.hijau}>
+      <Img
+        src={staticFile('logo.jpg')}
+        style={{
+          position: 'absolute',
+          top: 170,
+          left: 440,
+          width: 200,
+          height: 200,
+          objectFit: 'cover',
+          borderRadius: 48,
+          boxShadow: '0 0 90px rgba(0,176,155,0.5)',
+          opacity: sub,
+          transform: `scale(${0.7 + 0.3 * sub})`,
+        }}
+      />
       <div style={posisi(460)}>
         <KataPop kata={['Mulai', 'catat', 'bonmu', 'hari', 'ini']} sorot={[3, 4]} ukuran={104} />
       </div>

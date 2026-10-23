@@ -113,14 +113,40 @@ const Hook: React.FC = () => {
 
 /* ---------- Karakter pemilik warung (gambar public/karakter.jpg) ---------- */
 
+const MATA = [
+  {x: 39.0, y: 31.4, w: 8.7, h: 3.6, kulit: '160,106,78'},
+  {x: 52.7, y: 32.5, w: 8.2, h: 3.6, kulit: '200,143,108'},
+];
+
 const Karakter: React.FC<{top: number; tinggi: number; teks: string}> = ({top, tinggi, teks}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const masuk = spring({frame: frame - 8, fps, config: {damping: 12}});
-  const bubble = spring({frame: frame - 28, fps, config: {damping: 10}});
+  const masuk = spring({frame: frame - 6, fps, config: {damping: 8, mass: 0.9}});
+  const bubble = spring({frame: frame - 26, fps, config: {damping: 8}});
   const lebar = Math.round(tinggi * 0.85);
-  const goyang = Math.sin(frame / 16) * 8;
-  const zoom = 1.06 + Math.sin(frame / 38) * 0.03;
+  const W = lebar * 2;
+  const H = (W * 2576) / 1717;
+  const mulaiBicara = 34;
+  const bicara = frame >= mulaiBicara && frame < mulaiBicara + teks.length * 2 + 6;
+  const diketik = teks.slice(0, Math.max(0, Math.floor((frame - mulaiBicara) / 2)));
+  const sisa = teks.slice(diketik.length);
+  const t = (frame + 22) % 90;
+  const kedip = t < 8 ? Math.sin((Math.PI * t) / 8) : 0;
+  const napas = 1 + Math.sin(frame / 20) * 0.012;
+  const miring = Math.sin(frame / 26) * 1.6 + (bicara ? Math.sin(frame / 3.2) * 0.9 : 0);
+  const loncat = bicara ? -Math.abs(Math.sin(frame / 4.5)) * 7 : 0;
+  const bumbu = [0, 1, 2, 3, 4].map((k) => {
+    const fase = (frame - 70 + k * 26) % 130;
+    const aktif = frame > 70 && fase >= 0;
+    const naik = fase * 1.7;
+    return {
+      k,
+      aktif,
+      x: lebar * (0.12 + 0.19 * k),
+      y: naik,
+      o: aktif ? Math.max(0, 1 - fase / 120) : 0,
+    };
+  });
   return (
     <>
       <div
@@ -134,41 +160,100 @@ const Karakter: React.FC<{top: number; tinggi: number; teks: string}> = ({top, t
           overflow: 'hidden',
           border: '6px solid rgba(255,255,255,0.9)',
           boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
-          opacity: masuk,
-          transform: `translateY(${(1 - masuk) * 260 + goyang}px)`,
+          opacity: Math.min(1, masuk * 1.4),
+          transform: `translateX(${(1 - masuk) * -520}px) translateY(${loncat}px) rotate(${miring * 0.6}deg)`,
+          transformOrigin: '50% 100%',
         }}
       >
-        <Img
-          src={staticFile('karakter.jpg')}
+        <div
           style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: '50% 24%',
-            transform: `scale(${zoom})`,
+            position: 'absolute',
+            width: W,
+            height: H,
+            left: lebar / 2 - 0.46 * W,
+            top: tinggi * 0.4 - 0.32 * H,
+            transform: `scale(${napas}) rotate(${miring}deg)`,
+            transformOrigin: '46% 70%',
           }}
-        />
+        >
+          <Img src={staticFile('karakter.jpg')} style={{width: '100%', height: '100%', display: 'block'}} />
+          {MATA.map((m, i) => (
+            <React.Fragment key={i}>
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `${m.x - m.w / 2}%`,
+                  top: `${m.y - m.h / 2}%`,
+                  width: `${m.w}%`,
+                  height: `${m.h}%`,
+                  background: `radial-gradient(ellipse at center, rgba(${m.kulit},1) 55%, rgba(${m.kulit},0) 100%)`,
+                  opacity: kedip > 0 ? 1 : 0,
+                  transform: `scaleY(${kedip})`,
+                  transformOrigin: '50% 0%',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `${m.x - m.w * 0.42}%`,
+                  top: `${m.y - m.h * 0.2 + m.h * 0.7 * kedip - m.h * 0.35}%`,
+                  width: `${m.w * 0.84}%`,
+                  height: `${m.h * 0.3}%`,
+                  borderBottom: '3px solid rgb(50,30,25)',
+                  borderRadius: '0 0 50% 50%',
+                  opacity: kedip > 0.6 ? 1 : 0,
+                }}
+              />
+            </React.Fragment>
+          ))}
+        </div>
       </div>
+      {bumbu.map((b) =>
+        b.aktif ? (
+          <div
+            key={b.k}
+            style={{
+              position: 'absolute',
+              left: 70 + b.x,
+              top: top + tinggi * 0.35 - b.y,
+              width: 34,
+              height: 34,
+              opacity: b.o,
+              background:
+                b.k % 2 === 0
+                  ? 'radial-gradient(circle at 35% 30%, #fff3b0, #f5af19 60%, #c98a00)'
+                  : '#ffffff',
+              borderRadius: b.k % 2 === 0 ? 17 : 0,
+              clipPath:
+                b.k % 2 === 0
+                  ? 'none'
+                  : 'polygon(50% 0%, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0% 50%, 39% 38%)',
+              transform: `rotate(${b.y * 2}deg)`,
+            }}
+          />
+        ) : null
+      )}
       <div
         style={{
           position: 'absolute',
-          top: top + tinggi * 0.12,
+          top: top + tinggi * 0.1,
           left: 70 + lebar + 36,
           width: 1080 - (70 + lebar + 36) - 60,
           boxSizing: 'border-box',
-          padding: '32px 34px',
+          padding: '30px 34px',
           borderRadius: 40,
           background: 'white',
           color: warna.gelap,
           fontSize: 44,
           fontWeight: 800,
           lineHeight: 1.25,
-          opacity: bubble,
-          transform: `scale(${0.6 + 0.4 * bubble}) translateY(${goyang * 0.5}px)`,
+          opacity: Math.min(1, bubble * 1.5),
+          transform: `scale(${0.5 + 0.5 * bubble}) translateY(${loncat * 0.6}px)`,
           transformOrigin: 'left center',
         }}
       >
-        {teks}
+        <span>{diketik}</span>
+        <span style={{opacity: 0}}>{sisa}</span>
       </div>
     </>
   );

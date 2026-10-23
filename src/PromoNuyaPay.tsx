@@ -63,13 +63,16 @@ const Latar: React.FC<{children?: React.ReactNode}> = ({children}) => (
 
 /* ---------- Teks narasi di bawah ---------- */
 
-const Teks: React.FC<{kata: string[]; sorot?: number[]; mulai?: number}> = ({
-  kata,
-  sorot = [],
-  mulai = 6,
-}) => {
+const Teks: React.FC<{
+  kata: string[];
+  sorot?: number[];
+  mulai?: number;
+  sampai?: number;
+  ukuran?: number;
+}> = ({kata, sorot = [], mulai = 6, sampai, ukuran = 78}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
+  if (sampai !== undefined && frame > sampai) return null;
   return (
     <div
       style={{
@@ -91,7 +94,7 @@ const Teks: React.FC<{kata: string[]; sorot?: number[]; mulai?: number}> = ({
           <span
             key={i}
             style={{
-              fontSize: 78,
+              fontSize: ukuran,
               fontWeight: 900,
               padding: '0 22px',
               borderRadius: 18,
@@ -353,6 +356,69 @@ const Balas: React.FC = () => {
   );
 };
 
+/* ---------- Karakter pemilik warung (gambar public/karakter.jpg) ---------- */
+
+const Karakter: React.FC<{top: number; tinggi: number; teks: string}> = ({top, tinggi, teks}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const masuk = spring({frame: frame - 8, fps, config: {damping: 12}});
+  const bubble = spring({frame: frame - 28, fps, config: {damping: 10}});
+  const lebar = Math.round(tinggi * 0.85);
+  const goyang = Math.sin(frame / 16) * 8;
+  const zoom = 1.06 + Math.sin(frame / 38) * 0.03;
+  return (
+    <>
+      <div
+        style={{
+          position: 'absolute',
+          top,
+          left: 70,
+          width: lebar,
+          height: tinggi,
+          borderRadius: 56,
+          overflow: 'hidden',
+          border: `6px solid ${NEON}`,
+          boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
+          opacity: masuk,
+          transform: `translateY(${(1 - masuk) * 260 + goyang}px)`,
+        }}
+      >
+        <Img
+          src={staticFile('karakter.jpg')}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: '50% 24%',
+            transform: `scale(${zoom})`,
+          }}
+        />
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: top + tinggi * 0.12,
+          left: 70 + lebar + 36,
+          width: 1080 - (70 + lebar + 36) - 60,
+          boxSizing: 'border-box',
+          padding: '30px 34px',
+          borderRadius: 40,
+          background: 'white',
+          color: '#111827',
+          fontSize: 44,
+          fontWeight: 800,
+          lineHeight: 1.25,
+          opacity: bubble,
+          transform: `scale(${0.6 + 0.4 * bubble}) translateY(${goyang * 0.5}px)`,
+          transformOrigin: 'left center',
+        }}
+      >
+        {teks}
+      </div>
+    </>
+  );
+};
+
 /* ---------- Adegan 3: perkenalan NUYAPAY ---------- */
 
 const Logo: React.FC<{ukuran: number}> = ({ukuran}) => {
@@ -380,7 +446,7 @@ const Kenalan: React.FC = () => {
   const nama = spring({frame: frame - 12, fps, config: {damping: 12}});
   return (
     <Latar>
-      <div style={{marginTop: 420, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+      <div style={{marginTop: 260, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
         <Logo ukuran={380} />
         <div
           style={{
@@ -399,6 +465,7 @@ const Kenalan: React.FC = () => {
           {frame % 16 < 8 ? '|' : ''}
         </div>
       </div>
+      <Karakter top={1170} tinggi={340} teks="Tenang, ada NUYAPAY!" />
       <Teks kata={['Solusinya:', 'katalog', 'online', 'NUYAPAY']} sorot={[3]} mulai={20} />
     </Latar>
   );
@@ -476,7 +543,7 @@ const Penutup: React.FC<{alamat: string}> = ({alamat}) => {
   const denyut = 1 + Math.sin(frame / 6) * 0.02;
   return (
     <Latar>
-      <div style={{marginTop: 330, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+      <div style={{marginTop: 280, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
         <Logo ukuran={300} />
         <div style={{fontSize: 120, fontWeight: 900, color: 'white', marginTop: 40}}>NUYAPAY</div>
         <div style={{fontSize: 52, fontWeight: 700, color: 'rgba(255,255,255,0.75)', marginTop: 6}}>
@@ -498,6 +565,7 @@ const Penutup: React.FC<{alamat: string}> = ({alamat}) => {
           {alamat}
         </div>
       </div>
+      <Karakter top={1120} tinggi={380} teks="Yuk, coba sekarang!" />
       <Teks kata={['Coba', 'NUYAPAY', 'sekarang']} sorot={[1]} mulai={10} />
     </Latar>
   );
@@ -508,7 +576,19 @@ const Penutup: React.FC<{alamat: string}> = ({alamat}) => {
 export const PromoNuyaPay: React.FC<PromoProps> = ({alamat}) => (
   <AbsoluteFill style={{background: '#07080d'}}>
     <Adegan i={0} tanpaMasuk>
-      <StokHabis {...stokHabisDefaultProps} chats={chatPromo} />
+      <StokHabis
+        {...stokHabisDefaultProps}
+        chats={chatPromo}
+        kalimat="sering"
+        kataSorot="habis?"
+      />
+      <Teks
+        kata={['Jualan', 'lewat', 'WhatsApp,', 'tapi', 'chat', 'numpuk', 'dan', 'stok']}
+        sorot={[2]}
+        mulai={10}
+        sampai={120}
+        ukuran={66}
+      />
     </Adegan>
     <Adegan i={1}>
       <Balas />

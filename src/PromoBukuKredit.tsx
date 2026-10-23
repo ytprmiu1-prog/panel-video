@@ -111,6 +111,69 @@ const Hook: React.FC = () => {
   );
 };
 
+/* ---------- Karakter pemilik warung (gambar public/karakter.jpg) ---------- */
+
+const Karakter: React.FC<{top: number; tinggi: number; teks: string}> = ({top, tinggi, teks}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const masuk = spring({frame: frame - 8, fps, config: {damping: 12}});
+  const bubble = spring({frame: frame - 28, fps, config: {damping: 10}});
+  const lebar = Math.round(tinggi * 0.85);
+  const goyang = Math.sin(frame / 16) * 8;
+  const zoom = 1.06 + Math.sin(frame / 38) * 0.03;
+  return (
+    <>
+      <div
+        style={{
+          position: 'absolute',
+          top,
+          left: 70,
+          width: lebar,
+          height: tinggi,
+          borderRadius: 56,
+          overflow: 'hidden',
+          border: '6px solid rgba(255,255,255,0.9)',
+          boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
+          opacity: masuk,
+          transform: `translateY(${(1 - masuk) * 260 + goyang}px)`,
+        }}
+      >
+        <Img
+          src={staticFile('karakter.jpg')}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: '50% 24%',
+            transform: `scale(${zoom})`,
+          }}
+        />
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: top + tinggi * 0.12,
+          left: 70 + lebar + 36,
+          width: 1080 - (70 + lebar + 36) - 60,
+          boxSizing: 'border-box',
+          padding: '32px 34px',
+          borderRadius: 40,
+          background: 'white',
+          color: warna.gelap,
+          fontSize: 44,
+          fontWeight: 800,
+          lineHeight: 1.25,
+          opacity: bubble,
+          transform: `scale(${0.6 + 0.4 * bubble}) translateY(${goyang * 0.5}px)`,
+          transformOrigin: 'left center',
+        }}
+      >
+        {teks}
+      </div>
+    </>
+  );
+};
+
 const Masalah: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -150,6 +213,7 @@ const Masalah: React.FC = () => {
           );
         })}
       </div>
+      <Karakter top={1260} tinggi={560} teks="Duh, catatan bonnya berantakan lagi..." />
     </Latar>
   );
 };
@@ -191,6 +255,7 @@ const Solusi: React.FC = () => {
       >
         Buku Kredit UMKM
       </div>
+      <Karakter top={1300} tinggi={520} teks="Semua bon tercatat rapi di sini!" />
     </Latar>
   );
 };
@@ -1507,6 +1572,7 @@ const Ajakan: React.FC<{alamat: string}> = ({alamat}) => {
       >
         Buku Kredit UMKM
       </div>
+      <Karakter top={1490} tinggi={380} teks="Yuk, coba sekarang!" />
     </Latar>
   );
 };

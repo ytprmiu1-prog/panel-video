@@ -16,7 +16,7 @@ import {
 } from './kit';
 
 export type PromoBKProps = {alamat: string};
-export const promoBKDefaultProps: PromoBKProps = {alamat: 'nuyapay.my.id'};
+export const promoBKDefaultProps: PromoBKProps = {alamat: ''};
 
 // Durasi tiap adegan (frame, 30 fps): total 2490 frame = 83 detik
 const D = [105, 150, 90, 195, 240, 150, 240, 150, 150, 210, 165, 165, 195, 150, 135];
@@ -111,154 +111,6 @@ const Hook: React.FC = () => {
   );
 };
 
-/* ---------- Karakter pemilik warung (gambar public/karakter.jpg) ---------- */
-
-const MATA = [
-  {x: 39.0, y: 31.4, w: 8.7, h: 3.6, kulit: '160,106,78'},
-  {x: 52.7, y: 32.5, w: 8.2, h: 3.6, kulit: '200,143,108'},
-];
-
-const Karakter: React.FC<{top: number; tinggi: number; teks: string}> = ({top, tinggi, teks}) => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const masuk = spring({frame: frame - 6, fps, config: {damping: 8, mass: 0.9}});
-  const bubble = spring({frame: frame - 26, fps, config: {damping: 8}});
-  const lebar = Math.round(tinggi * 0.85);
-  const W = lebar * 2;
-  const H = (W * 2576) / 1717;
-  const mulaiBicara = 34;
-  const bicara = frame >= mulaiBicara && frame < mulaiBicara + teks.length * 2 + 6;
-  const diketik = teks.slice(0, Math.max(0, Math.floor((frame - mulaiBicara) / 2)));
-  const sisa = teks.slice(diketik.length);
-  const t = (frame + 22) % 90;
-  const kedip = t < 8 ? Math.sin((Math.PI * t) / 8) : 0;
-  const napas = 1 + Math.sin(frame / 20) * 0.012;
-  const miring = Math.sin(frame / 26) * 1.6 + (bicara ? Math.sin(frame / 3.2) * 0.9 : 0);
-  const loncat = bicara ? -Math.abs(Math.sin(frame / 4.5)) * 7 : 0;
-  const bumbu = [0, 1, 2, 3, 4].map((k) => {
-    const fase = (frame - 70 + k * 26) % 130;
-    const aktif = frame > 70 && fase >= 0;
-    const naik = fase * 1.7;
-    return {
-      k,
-      aktif,
-      x: lebar * (0.12 + 0.19 * k),
-      y: naik,
-      o: aktif ? Math.max(0, 1 - fase / 120) : 0,
-    };
-  });
-  return (
-    <>
-      <div
-        style={{
-          position: 'absolute',
-          top,
-          left: 70,
-          width: lebar,
-          height: tinggi,
-          borderRadius: 56,
-          overflow: 'hidden',
-          border: '6px solid rgba(255,255,255,0.9)',
-          boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
-          opacity: Math.min(1, masuk * 1.4),
-          transform: `translateX(${(1 - masuk) * -520}px) translateY(${loncat}px) rotate(${miring * 0.6}deg)`,
-          transformOrigin: '50% 100%',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            width: W,
-            height: H,
-            left: lebar / 2 - 0.46 * W,
-            top: tinggi * 0.4 - 0.32 * H,
-            transform: `scale(${napas}) rotate(${miring}deg)`,
-            transformOrigin: '46% 70%',
-          }}
-        >
-          <Img src={staticFile('karakter.jpg')} style={{width: '100%', height: '100%', display: 'block'}} />
-          {MATA.map((m, i) => (
-            <React.Fragment key={i}>
-              <div
-                style={{
-                  position: 'absolute',
-                  left: `${m.x - m.w / 2}%`,
-                  top: `${m.y - m.h / 2}%`,
-                  width: `${m.w}%`,
-                  height: `${m.h}%`,
-                  background: `radial-gradient(ellipse at center, rgba(${m.kulit},1) 55%, rgba(${m.kulit},0) 100%)`,
-                  opacity: kedip > 0 ? 1 : 0,
-                  transform: `scaleY(${kedip})`,
-                  transformOrigin: '50% 0%',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  left: `${m.x - m.w * 0.42}%`,
-                  top: `${m.y - m.h * 0.2 + m.h * 0.7 * kedip - m.h * 0.35}%`,
-                  width: `${m.w * 0.84}%`,
-                  height: `${m.h * 0.3}%`,
-                  borderBottom: '3px solid rgb(50,30,25)',
-                  borderRadius: '0 0 50% 50%',
-                  opacity: kedip > 0.6 ? 1 : 0,
-                }}
-              />
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-      {bumbu.map((b) =>
-        b.aktif ? (
-          <div
-            key={b.k}
-            style={{
-              position: 'absolute',
-              left: 70 + b.x,
-              top: top + tinggi * 0.35 - b.y,
-              width: 34,
-              height: 34,
-              opacity: b.o,
-              background:
-                b.k % 2 === 0
-                  ? 'radial-gradient(circle at 35% 30%, #fff3b0, #f5af19 60%, #c98a00)'
-                  : '#ffffff',
-              borderRadius: b.k % 2 === 0 ? 17 : 0,
-              clipPath:
-                b.k % 2 === 0
-                  ? 'none'
-                  : 'polygon(50% 0%, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0% 50%, 39% 38%)',
-              transform: `rotate(${b.y * 2}deg)`,
-            }}
-          />
-        ) : null
-      )}
-      <div
-        style={{
-          position: 'absolute',
-          top: top + tinggi * 0.1,
-          left: 70 + lebar + 36,
-          width: 1080 - (70 + lebar + 36) - 60,
-          boxSizing: 'border-box',
-          padding: '30px 34px',
-          borderRadius: 40,
-          background: 'white',
-          color: warna.gelap,
-          fontSize: 44,
-          fontWeight: 800,
-          lineHeight: 1.25,
-          opacity: Math.min(1, bubble * 1.5),
-          transform: `scale(${0.5 + 0.5 * bubble}) translateY(${loncat * 0.6}px)`,
-          transformOrigin: 'left center',
-        }}
-      >
-        <span>{diketik}</span>
-        <span style={{opacity: 0}}>{sisa}</span>
-      </div>
-    </>
-  );
-};
-
 const Masalah: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -298,7 +150,6 @@ const Masalah: React.FC = () => {
           );
         })}
       </div>
-      <Karakter top={1260} tinggi={560} teks="Duh, catatan bonnya berantakan lagi..." />
     </Latar>
   );
 };
@@ -314,7 +165,7 @@ const Solusi: React.FC = () => {
         <KataPop kata={['Ganti', 'ke...']} ukuran={96} />
       </div>
       <Img
-        src={staticFile('logo.jpg')}
+        src={staticFile('logo.png')}
         style={{
           position: 'absolute',
           top: 740,
@@ -340,7 +191,6 @@ const Solusi: React.FC = () => {
       >
         Buku Kredit UMKM
       </div>
-      <Karakter top={1300} tinggi={520} teks="Semua bon tercatat rapi di sini!" />
     </Latar>
   );
 };
@@ -1589,7 +1439,7 @@ const Rekap: React.FC = () => {
 
 /* ---------- Ajakan ---------- */
 
-const Ajakan: React.FC<{alamat: string}> = ({alamat}) => {
+const Ajakan: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const pil = spring({frame: frame - 50, fps, config: {damping: 9}});
@@ -1597,7 +1447,7 @@ const Ajakan: React.FC<{alamat: string}> = ({alamat}) => {
   return (
     <Latar glow={warna.hijau}>
       <Img
-        src={staticFile('logo.jpg')}
+        src={staticFile('logo.png')}
         style={{
           position: 'absolute',
           top: 170,
@@ -1629,21 +1479,31 @@ const Ajakan: React.FC<{alamat: string}> = ({alamat}) => {
       <div
         style={{
           position: 'absolute',
-          top: 1160,
-          left: 190,
-          width: 700,
-          height: 130,
-          borderRadius: 65,
-          background: warna.oranye,
-          color: warna.gelap,
-          fontSize: 56,
-          fontWeight: 900,
-          textAlign: 'center',
-          lineHeight: '130px',
+          top: 1130,
+          left: 150,
+          width: 780,
+          height: 200,
+          boxSizing: 'border-box',
+          borderRadius: 40,
+          background: '#000',
+          border: '4px solid #8a8f99',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 36,
+          padding: '0 50px',
           transform: `scale(${pil})`,
         }}
       >
-        {alamat}
+        <svg width="104" height="114" viewBox="0 0 100 110">
+          <polygon points="10,6 56,55 10,104" fill="#2196f3" />
+          <polygon points="10,6 74,42 56,55" fill="#4caf50" />
+          <polygon points="74,42 96,55 74,68 56,55" fill="#ffc107" />
+          <polygon points="10,104 56,55 74,68" fill="#f44336" />
+        </svg>
+        <div>
+          <div style={{fontSize: 30, fontWeight: 700, color: 'white', letterSpacing: 3}}>UNDUH DI</div>
+          <div style={{fontSize: 72, fontWeight: 700, color: 'white', lineHeight: 1.05}}>Play Store</div>
+        </div>
       </div>
       <div
         style={{
@@ -1657,14 +1517,13 @@ const Ajakan: React.FC<{alamat: string}> = ({alamat}) => {
       >
         Buku Kredit UMKM
       </div>
-      <Karakter top={1490} tinggi={380} teks="Yuk, coba sekarang!" />
     </Latar>
   );
 };
 
 /* ================= RANGKAIAN SEMUA ADEGAN ================= */
 
-export const PromoBukuKredit: React.FC<PromoBKProps> = ({alamat}) => {
+export const PromoBukuKredit: React.FC<PromoBKProps> = () => {
   const adegan: React.ReactNode[] = [
     <Hook key="0" />,
     <Masalah key="1" />,
@@ -1680,7 +1539,7 @@ export const PromoBukuKredit: React.FC<PromoBKProps> = ({alamat}) => {
     <EditHapus key="11" />,
     <Backup key="12" />,
     <Rekap key="13" />,
-    <Ajakan key="14" alamat={alamat} />,
+    <Ajakan key="14" />,
   ];
   return (
     <Latar>

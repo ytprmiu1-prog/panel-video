@@ -156,5 +156,5 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={promoDefaultProps}
     />
     <Composition id="PromoBukuKredit" component={PromoBukuKredit} durationInFrames={DURASI_BK} fps={30} width={1080} height={1920} defaultProps={promoBKDefaultProps} /> 
-  </>
+  <Composition id="TutorialScanBarcode" component={TutorialScanBarcode} durationInFrames={DURASI_SCAN} fps={30} width={1080} height={1920} /> </>
 );

@@ -14,6 +14,7 @@ on:
           - StokHabis
           - PromoNuyaPay
           - PromoBukuKredit
+          - TutorialScanBarcode
       title:
         description: Judul
         default: Halo Dunia

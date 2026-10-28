@@ -11,6 +11,7 @@ import {StokHabis, stokHabisDefaultProps} from './StokHabis';
 import {PromoNuyaPay, promoDefaultProps, DURASI_PROMO} from './PromoNuyaPay';
 import {PromoBukuKredit, promoBKDefaultProps, DURASI_BK} from './PromoBukuKredit';
 import {TutorialScanBarcode, DURASI_SCAN} from './TutorialScanBarcode';
+import {OmsetBukanLaba, DURASI_OMSET} from './OmsetBukanLaba';
 type Props = {title: string; subtitle: string; bgColor: string};
 
 const clamp = {
@@ -156,5 +157,7 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={promoDefaultProps}
     />
     <Composition id="PromoBukuKredit" component={PromoBukuKredit} durationInFrames={DURASI_BK} fps={30} width={1080} height={1920} defaultProps={promoBKDefaultProps} /> 
-  <Composition id="TutorialScanBarcode" component={TutorialScanBarcode} durationInFrames={DURASI_SCAN} fps={30} width={1080} height={1920} /> </>
+  <Composition id="TutorialScanBarcode" component={TutorialScanBarcode} durationInFrames={DURASI_SCAN} fps={30} width={1080} height={1920} /> 
+  <Composition id="OmsetBukanLaba" component={OmsetBukanLaba} durationInFrames={DURASI_OMSET} fps={30} width={1080} height={1920} />
+  </>
 );

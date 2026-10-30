@@ -2,29 +2,9 @@ name: Render video
 on:
   workflow_dispatch:
     inputs:
-      style:
-        description: Style video
-        type: choice
-        default: MyComp
-        options:
-          - MyComp
-          - Gradasi
-          - Kartu
-          - Kinetik
-          - StokHabis
-          - PromoNuyaPay
-          - PromoBukuKredit
-          - TutorialScanBarcode
-          - OmsetBukanLaba          
-      title:
-        description: Judul
-        default: Halo Dunia
-      subtitle:
-        description: Subjudul
-        default: Video pertamaku
-      bgColor:
-        description: Warna latar
-        default: '#111827'
+      judul:
+        description: Nama video (opsional)
+        default: Video
 permissions:
   contents: write
 jobs:
@@ -36,13 +16,8 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: echo "$WORKFLOW_INPUT" > input-props.json
-        env:
-          WORKFLOW_INPUT: ${{ toJson(github.event.inputs) }}
-      - run: npx remotion render src/index.ts "$STYLE" out/video.mp4 --props=./input-props.json
-        env:
-          STYLE: ${{ github.event.inputs.style || 'MyComp' }}
-      - run: gh release create "video-${{ github.run_number }}" out/video.mp4 --title "Video ${{ github.run_number }}" --notes "$NOTES"
+      - run: npx remotion render src/index.ts Video out/video.mp4
+      - run: gh release create "video-${{ github.run_number }}" out/video.mp4 --title "$JUDUL" --notes "Render nomor ${{ github.run_number }}"
         env:
           GH_TOKEN: ${{ github.token }}
-          NOTES: ${{ github.event.inputs.title }}
+          JUDUL: ${{ github.event.inputs.judul }}

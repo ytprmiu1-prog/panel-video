@@ -12,6 +12,7 @@ import {
 
 /* =====================================================================
    TUTORIAL: TERIMA PESANAN ONLINE (tepat 59 detik = 1770 frame, 30 fps)
+   Alur: pembeli checkout -> cek pesanan -> Proses -> konfirmasi/peta -> bayar & struk -> tips link toko
    - Gaya blok merah-putih, tulisan seperti stiker, ritme cepat
    - Ponsel lurus, tanpa tokoh kartun, tanpa domain, tanpa musik
    - Narasi pakai text-to-speech TikTok; semua data adalah data contoh
@@ -38,7 +39,7 @@ const ketik = (t: string, frame: number, mulai: number, laju = 2) =>
 const ease = (p: number) => 1 - Math.pow(1 - p, 3);
 
 // Durasi adegan (frame). HARUS berjumlah tepat 1770 (59 detik).
-const D = [120, 180, 210, 300, 270, 240, 270, 90, 90];
+const D = [120, 150, 180, 270, 240, 240, 240, 120, 120, 90];
 const DARI = D.map((_, i) => D.slice(0, i).reduce((a, b) => a + b, 0));
 if (D.reduce((a, b) => a + b, 0) !== 1770) {
   throw new Error('Total durasi adegan harus tepat 1770 frame (59 detik)');
@@ -224,6 +225,20 @@ const Nomor: React.FC<{n: string; teks: string; tema: Tema}> = ({n, teks, tema})
         {n}
       </div>
       <div style={{fontSize: 70, fontWeight: 900, color: tema === 'merah' ? 'white' : C.tinta}}>{teks}</div>
+    </div>
+  );
+};
+
+
+const Pil: React.FC<{teks: string; kuning?: boolean}> = ({teks, kuning}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const s = spring({frame: Math.max(0, frame - 2), fps, config: {damping: 10}});
+  return (
+    <div style={{position: 'absolute', top: 80, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: s, transform: `scale(${0.7 + 0.3 * s})`}}>
+      <div style={{padding: '18px 44px', borderRadius: 999, background: kuning ? C.kuning : C.tinta, color: kuning ? C.tinta : 'white', border: `6px solid ${C.tinta}`, boxShadow: `8px 8px 0 ${C.tinta}`, fontSize: 58, fontWeight: 900, letterSpacing: 3}}>
+        {teks}
+      </div>
     </div>
   );
 };
@@ -498,14 +513,15 @@ const Hook: React.FC = () => {
         </div>
         <div>
           <div style={{fontSize: 54, fontWeight: 900, color: C.tinta}}>Pesanan Masuk</div>
-          <div style={{fontSize: 38, fontWeight: 700, color: '#6b5a55', marginTop: 4}}>Bu Sari pesan 3 barang</div>
+          <div style={{fontSize: 38, fontWeight: 700, color: '#6b5a55', marginTop: 4}}>Bu Sari checkout 3 barang</div>
         </div>
       </div>
-      <Stiker teks="Terus ngapain?" mulai={44} top={1000} />
-      <Stiker teks="Gampang, 4 langkah!" mulai={74} top={1190} rot={2} warna="white" />
-      <div style={{position: 'absolute', top: 1450, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 36}}>
+      <Stiker teks="Pembeli checkout!" mulai={40} top={960} warna="white" />
+      <Stiker teks="Terus ngapain?" mulai={56} top={1130} />
+      <Stiker teks="Gampang, 4 langkah!" mulai={78} top={1300} rot={2} />
+      <div style={{position: 'absolute', top: 1520, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 36}}>
         {['1', '2', '3', '4'].map((n, i) => {
-          const s = spring({frame: Math.max(0, frame - (86 + i * 7)), fps, config: {damping: 8}});
+          const s = spring({frame: Math.max(0, frame - (90 + i * 6)), fps, config: {damping: 8}});
           return (
             <div key={n} style={{width: 120, height: 120, borderRadius: 60, background: C.kuning, border: `6px solid ${C.tinta}`, fontSize: 76, fontWeight: 900, textAlign: 'center', lineHeight: '106px', color: C.tinta, boxShadow: `6px 6px 0 ${C.tinta}`, transform: `scale(${s})`, opacity: s}}>
               {n}
@@ -517,45 +533,46 @@ const Hook: React.FC = () => {
   );
 };
 
-/* ================= ADEGAN 2: BAGIKAN LINK TOKO ================= */
+/* ================= ADEGAN 2: PESANAN DATANG DARI LINK TOKO ================= */
 
-const Link: React.FC = () => {
+const Dari: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const linkTekan = frame >= 20 && frame < 32 ? 1 : 0;
-  const dialog = interpolate(frame, [34, 44, 86, 96], [0, 1, 1, 0], clamp);
-  const terbang = interpolate(frame, [92, 128], [0, 1], clamp);
-  const pesan = spring({frame: frame - 140, fps, config: {damping: 10}});
-  const tekanPesan = frame >= 150 && frame < 160 ? 0.93 : 1;
+  const bar = spring({frame: frame - 24, fps, config: {damping: 10}});
+  const tekan = frame >= 56 && frame < 66 ? 0.93 : 1;
+  const berhasil = interpolate(frame, [66, 76, 100, 108], [0, 1, 1, 0], clamp);
+  const terbang = interpolate(frame, [76, 110], [0, 1], clamp);
+  const tiba = frame >= 110;
+  const lonceng = interpolate(frame, [110, 120, 134], [0, 1, 0], clamp);
   return (
     <Latar tema="krem">
-      <Nomor n="1" teks="Bagikan link toko" tema="krem" />
-      <div style={{position: 'absolute', top: 290, left: 60, width: 440, textAlign: 'center', fontSize: 40, fontWeight: 900, color: C.tinta}}>HP kamu</div>
-      <div style={{position: 'absolute', top: 290, left: 580, width: 440, textAlign: 'center', fontSize: 40, fontWeight: 900, color: C.merah}}>HP pelanggan</div>
-      <Hp lebar={440} kiri={60} atas={360}>
-        <LayarUtama badge={0} linkTekan={linkTekan} />
-        <Dialog opa={dialog} judul="Tersalin!" pesan="Link toko berhasil disalin. Bagikan ke pelanggan Anda." hijau />
-      </Hp>
-      <Hp lebar={440} kiri={580} atas={360} mulai={80}>
+      <Pil teks="DARI LINK TOKO" />
+      <div style={{position: 'absolute', top: 250, left: 60, width: 440, textAlign: 'center', fontSize: 44, fontWeight: 900, color: C.merah}}>HP pembeli</div>
+      <div style={{position: 'absolute', top: 250, left: 580, width: 440, textAlign: 'center', fontSize: 44, fontWeight: 900, color: C.tinta}}>Kasirmu</div>
+      <Hp lebar={440} kiri={60} atas={330}>
         <div style={{width: '100%', height: '100%'}}>
           <Header judul="Warung Berkah" />
           <div style={{padding: 22}}>
             <div style={{fontSize: 26, fontWeight: 900, color: C.gelap, marginBottom: 14}}>Katalog</div>
             <GridProduk sorot="Kopi Susu Botol" />
           </div>
-          <div style={{position: 'absolute', left: 22, right: 22, bottom: 26, height: 84, borderRadius: 22, background: C.biru, color: 'white', fontSize: 30, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: pesan, transform: `scale(${tekanPesan})`}}>
-            Pesan (3 item)
+          <div style={{position: 'absolute', left: 22, right: 22, bottom: 26, height: 84, borderRadius: 22, background: C.biru, color: 'white', fontSize: 30, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: bar, transform: `scale(${tekan})`}}>
+            Checkout (3 item)
           </div>
         </div>
+        <Dialog opa={berhasil} judul="Pesanan terkirim" pesan="Pesanan diteruskan ke toko." hijau />
+      </Hp>
+      <Hp lebar={440} kiri={580} atas={330} mulai={20}>
+        <LayarUtama badge={tiba ? 1 : 0} lonceng={lonceng} />
       </Hp>
       <div
         style={{
           position: 'absolute',
-          left: 440 + terbang * 200,
-          top: 900 - Math.sin(terbang * Math.PI) * 160,
+          left: 380 + terbang * 280,
+          top: 880 - Math.sin(terbang * Math.PI) * 170,
           padding: '16px 30px',
           borderRadius: 999,
-          background: C.hijau,
+          background: C.merah,
           color: 'white',
           fontSize: 40,
           fontWeight: 900,
@@ -564,9 +581,9 @@ const Link: React.FC = () => {
           opacity: terbang > 0 && terbang < 1 ? 1 : 0,
         }}
       >
-        link toko
+        pesanan
       </div>
-      <Stiker teks="Tinggal pilih, terus pesan" mulai={150} top={1480} rot={-2} />
+      <Stiker teks="Masuk ke kasirmu" mulai={112} top={1460} rot={-2} />
       <Catatan tema="krem" />
     </Latar>
   );
@@ -576,23 +593,23 @@ const Link: React.FC = () => {
 
 const Masuk: React.FC = () => {
   const frame = useCurrentFrame();
-  const badge = frame >= 60 ? 1 : 0;
-  const lonceng = interpolate(frame, [60, 70, 84], [0, 1, 0], clamp);
-  const getar = frame >= 60 && frame < 100 ? 1 : 0;
+  const badge = frame >= 50 ? 1 : 0;
+  const lonceng = interpolate(frame, [50, 60, 74], [0, 1, 0], clamp);
+  const getar = frame >= 50 && frame < 90 ? 1 : 0;
   return (
     <Latar tema="merah">
-      <Nomor n="2" teks="Pesanan masuk" tema="merah" />
+      <Nomor n="1" teks="Cek pesanan" tema="merah" />
       <Hp getar={getar} atas={290}>
         <LayarUtama badge={badge} lonceng={lonceng} />
       </Hp>
-      {frame >= 60 && frame < 104 ? (
+      {frame >= 50 && frame < 94 ? (
         <>
           <div style={{position: 'absolute', left: 90, top: 600, fontSize: 70, fontWeight: 900, color: C.kuning, transform: 'rotate(-12deg)'}}>bzzt</div>
           <div style={{position: 'absolute', right: 90, top: 700, fontSize: 70, fontWeight: 900, color: C.kuning, transform: 'rotate(10deg)'}}>bzzt</div>
         </>
       ) : null}
-      <Stiker teks="Angka di sini nambah" mulai={64} top={1560} rot={-2} />
-      <Stiker teks="Aplikasi kebuka? HP bergetar" mulai={120} top={1730} rot={2} warna="white" ukuran={42} />
+      <Stiker teks="Angka di sini nambah" mulai={54} top={1560} rot={-2} />
+      <Stiker teks="Aplikasi kebuka? HP bergetar" mulai={100} top={1730} rot={2} warna="white" ukuran={42} />
     </Latar>
   );
 };
@@ -603,24 +620,24 @@ const Baca: React.FC = () => {
   const frame = useCurrentFrame();
   const buka = ease(interpolate(frame, [6, 30], [0, 1], clamp));
   const urut = [
-    {k: 'nama', dari: 60, t: 'Siapa yang pesan'},
-    {k: 'alamat', dari: 90, t: 'Alamatnya'},
-    {k: 'catatan', dari: 120, t: 'Catatannya'},
-    {k: 'barang', dari: 150, t: 'Barang apa aja'},
-    {k: 'total', dari: 195, t: 'Totalnya'},
+    {k: 'nama', dari: 50, t: 'Siapa yang pesan'},
+    {k: 'alamat', dari: 80, t: 'Alamatnya'},
+    {k: 'catatan', dari: 110, t: 'Catatannya'},
+    {k: 'barang', dari: 140, t: 'Barang apa aja'},
+    {k: 'total', dari: 180, t: 'Totalnya'},
   ];
   const aktif = [...urut].reverse().find((u) => frame >= u.dari);
   return (
     <Latar tema="krem">
-      <Nomor n="2" teks="Buka & baca" tema="krem" />
+      <Nomor n="1" teks="Buka & baca" tema="krem" />
       <Hp atas={290}>
         <LayarUtama badge={1} />
         <SheetPesanan buka={buka}>
-          <KartuPesanan status="baru" sorot={aktif && frame < 245 ? aktif.k : ''} />
+          <KartuPesanan status="baru" sorot={aktif && frame < 225 ? aktif.k : ''} />
         </SheetPesanan>
       </Hp>
-      {aktif && frame < 245 ? <Stiker key={aktif.k} teks={aktif.t} mulai={aktif.dari} top={1560} /> : null}
-      {frame >= 245 ? <Stiker teks="Semua lengkap, nggak perlu nanya" mulai={245} top={1560} ukuran={46} warna={C.merah} tulisan="white" /> : null}
+      {aktif && frame < 225 ? <Stiker key={aktif.k} teks={aktif.t} mulai={aktif.dari} top={1560} /> : null}
+      {frame >= 225 ? <Stiker teks="Semua lengkap, nggak perlu nanya" mulai={225} top={1560} ukuran={46} warna={C.merah} tulisan="white" /> : null}
       <Catatan tema="krem" />
     </Latar>
   );
@@ -640,13 +657,13 @@ const KeranjangBar: React.FC<{bump: number}> = ({bump}) => (
 
 const Proses: React.FC = () => {
   const frame = useCurrentFrame();
-  const tekan = frame >= 26 && frame < 36 ? 'proses' : '';
-  const dialog = interpolate(frame, [40, 52, 140, 152], [0, 1, 1, 0], clamp);
-  const kasir = frame >= 154;
-  const bump = interpolate(frame, [160, 170, 182], [0, 1, 0], clamp);
+  const tekan = frame >= 24 && frame < 34 ? 'proses' : '';
+  const dialog = interpolate(frame, [38, 50, 128, 140], [0, 1, 1, 0], clamp);
+  const kasir = frame >= 142;
+  const bump = interpolate(frame, [148, 158, 170], [0, 1, 0], clamp);
   return (
     <Latar tema="merah">
-      <Nomor n="3" teks="Ketuk Proses" tema="merah" />
+      <Nomor n="2" teks="Ketuk Proses" tema="merah" />
       <Hp atas={290}>
         {kasir ? (
           <div style={{width: '100%', height: '100%', position: 'relative'}}>
@@ -667,8 +684,8 @@ const Proses: React.FC = () => {
         )}
         <Dialog opa={dialog} judul="Pesanan Dimuat" pesan={'Pesanan Bu Sari sudah dimuat ke keranjang.\nTambahkan Ongkir bila perlu, lalu tekan Bayar.'} hijau />
       </Hp>
-      {frame >= 60 && frame < 150 ? <Stiker teks="Ongkir? Tambahin aja" mulai={60} top={1560} /> : null}
-      {frame >= 160 ? <Stiker teks="Langsung masuk keranjang!" mulai={160} top={1560} /> : null}
+      {frame >= 56 && frame < 138 ? <Stiker teks="Ongkir? Tambahin aja" mulai={56} top={1560} /> : null}
+      {frame >= 148 ? <Stiker teks="Langsung masuk keranjang!" mulai={148} top={1560} /> : null}
     </Latar>
   );
 };
@@ -718,9 +735,9 @@ const PetaLokasi: React.FC<{buka: number}> = ({buka}) => {
 const WaPeta: React.FC = () => {
   const frame = useCurrentFrame();
   const sheet = ease(interpolate(frame, [4, 24], [0, 1], clamp));
-  const tekan = frame >= 38 && frame < 48 ? 'wa' : frame >= 128 && frame < 138 ? 'peta' : '';
-  const wa = interpolate(frame, [50, 62, 108, 120], [0, 1, 1, 0], clamp);
-  const peta = ease(interpolate(frame, [142, 166], [0, 1], clamp));
+  const tekan = frame >= 36 && frame < 46 ? 'wa' : frame >= 120 && frame < 130 ? 'peta' : '';
+  const wa = interpolate(frame, [48, 60, 104, 116], [0, 1, 1, 0], clamp);
+  const peta = ease(interpolate(frame, [134, 158], [0, 1], clamp));
   return (
     <Latar tema="krem">
       <Nomor n="3" teks="Konfirmasi & cek lokasi" tema="krem" />
@@ -732,8 +749,8 @@ const WaPeta: React.FC = () => {
         <ChatWa opa={wa} />
         <PetaLokasi buka={peta} />
       </Hp>
-      {frame >= 50 && frame < 124 ? <Stiker teks="Chat WA: langsung kebuka" mulai={50} top={1560} /> : null}
-      {frame >= 150 ? <Stiker teks="Peta: lokasi pelanggan" mulai={150} top={1560} rot={2} warna={C.merah} tulisan="white" /> : null}
+      {frame >= 48 && frame < 118 ? <Stiker teks="Chat WA: langsung kebuka" mulai={48} top={1560} /> : null}
+      {frame >= 140 ? <Stiker teks="Peta: lokasi pelanggan" mulai={140} top={1560} rot={2} warna={C.merah} tulisan="white" /> : null}
       <Catatan tema="krem" />
     </Latar>
   );
@@ -743,10 +760,10 @@ const WaPeta: React.FC = () => {
 
 const Bayar: React.FC = () => {
   const frame = useCurrentFrame();
-  const kembali = interpolate(frame, [50, 78], [0, 56000], clamp);
-  const pilih = frame >= 44;
-  const tekanSelesai = frame >= 108 && frame < 118 ? 0.95 : 1;
-  const struk = ease(interpolate(frame, [130, 154], [0, 1], clamp));
+  const kembali = interpolate(frame, [44, 70], [0, 56000], clamp);
+  const pilih = frame >= 40;
+  const tekanSelesai = frame >= 98 && frame < 108 ? 0.95 : 1;
+  const struk = ease(interpolate(frame, [118, 142], [0, 1], clamp));
   const a = 1;
   return (
     <Latar tema="merah">
@@ -788,7 +805,7 @@ const Bayar: React.FC = () => {
           </div>
         </div>
       </Hp>
-      {frame < 126 ? <Stiker teks="Tunai atau QRIS, kayak biasa" mulai={20} top={1560} /> : <Stiker teks="Struk: cetak, kirim, atau simpan" mulai={140} top={1560} ukuran={46} />}
+      {frame < 114 ? <Stiker teks="Tunai atau QRIS, kayak biasa" mulai={20} top={1560} /> : <Stiker teks="Struk: cetak, kirim, atau simpan" mulai={128} top={1560} ukuran={46} />}
     </Latar>
   );
 };
@@ -797,7 +814,7 @@ const Bayar: React.FC = () => {
 
 const Tanda: React.FC = () => {
   const frame = useCurrentFrame();
-  const status = frame >= 24 ? 'proses' : 'baru';
+  const status = frame >= 30 ? 'proses' : 'baru';
   return (
     <Latar tema="krem">
       <Hp atas={260}>
@@ -806,13 +823,34 @@ const Tanda: React.FC = () => {
           <KartuPesanan status={status} />
         </SheetPesanan>
       </Hp>
-      <Stiker teks="Ditandai. Nggak ada yang kelewat!" mulai={26} top={1520} ukuran={50} warna={C.merah} tulisan="white" />
+      <Stiker teks="Ditandai. Nggak ada yang kelewat!" mulai={32} top={1520} ukuran={50} warna={C.merah} tulisan="white" />
       <Catatan tema="krem" />
     </Latar>
   );
 };
 
-/* ================= ADEGAN 9: AJAKAN ================= */
+/* ================= ADEGAN 9: TIPS BAGIKAN LINK TOKO ================= */
+
+const Tips: React.FC = () => {
+  const frame = useCurrentFrame();
+  const linkTekan = frame >= 30 && frame < 42 ? 1 : 0;
+  const toast = interpolate(frame, [44, 56, 104, 116], [0, 1, 1, 0], clamp);
+  return (
+    <Latar tema="merah">
+      <Pil teks="TIPS" kuning />
+      <Hp atas={290}>
+        <LayarUtama badge={0} linkTekan={linkTekan} />
+        <div style={{position: 'absolute', left: 80, right: 80, bottom: 130, padding: '20px 0', borderRadius: 40, background: C.hijau, color: 'white', fontSize: 30, fontWeight: 800, textAlign: 'center', opacity: toast, transform: `translateY(${(1 - toast) * 60}px)`}}>
+          Link toko disalin
+        </div>
+      </Hp>
+      <Stiker teks="Bagikan link ke pelanggan" mulai={20} top={1560} />
+      <Stiker teks="Pesanan makin banyak" mulai={64} top={1730} rot={2} warna="white" ukuran={42} />
+    </Latar>
+  );
+};
+
+/* ================= ADEGAN 10: AJAKAN ================= */
 
 const Ajakan: React.FC = () => {
   const frame = useCurrentFrame();
@@ -874,14 +912,15 @@ const Ajakan: React.FC = () => {
 export const Video: React.FC = () => (
   <AbsoluteFill style={{background: C.merah}}>
     <Adegan dari={DARI[0]} durasi={D[0]}><Hook /></Adegan>
-    <Adegan dari={DARI[1]} durasi={D[1]}><Link /></Adegan>
+    <Adegan dari={DARI[1]} durasi={D[1]}><Dari /></Adegan>
     <Adegan dari={DARI[2]} durasi={D[2]}><Masuk /></Adegan>
     <Adegan dari={DARI[3]} durasi={D[3]}><Baca /></Adegan>
     <Adegan dari={DARI[4]} durasi={D[4]}><Proses /></Adegan>
     <Adegan dari={DARI[5]} durasi={D[5]}><WaPeta /></Adegan>
     <Adegan dari={DARI[6]} durasi={D[6]}><Bayar /></Adegan>
     <Adegan dari={DARI[7]} durasi={D[7]}><Tanda /></Adegan>
-    <Adegan dari={DARI[8]} durasi={D[8]}><Ajakan /></Adegan>
+    <Adegan dari={DARI[8]} durasi={D[8]}><Tips /></Adegan>
+    <Adegan dari={DARI[9]} durasi={D[9]}><Ajakan /></Adegan>
     <Progres />
   </AbsoluteFill>
 );

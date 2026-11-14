@@ -11,21 +11,20 @@ import {
 } from 'remotion';
 
 /* =====================================================================
-   TUTORIAL: TERIMA PESANAN ONLINE (tepat 59 detik = 1770 frame, 30 fps)
-   Alur: pembeli checkout -> cek pesanan -> Proses -> konfirmasi/peta -> bayar & struk -> tips link toko
-   - Gaya blok merah-putih, tulisan seperti stiker, ritme cepat
+   TUTORIAL: CATAT PENGELUARAN & BACA LAPORAN (tepat 59 detik = 1770 frame)
+   - Gaya buku kas bergaris + stabilo kuning + catatan tempel
    - Ponsel lurus, tanpa tokoh kartun, tanpa domain, tanpa musik
-   - Narasi pakai text-to-speech TikTok; semua data adalah data contoh
+   - Narasi pakai text-to-speech TikTok; semua angka adalah data contoh
    File berdiri sendiri: cukup timpa src/Video.tsx
    ===================================================================== */
 
 const C = {
+  kertas: '#fbf6e6',
+  tinta: '#1b1f3b',
+  stabilo: '#ffe14d',
   merah: '#d92b22',
-  merahGelap: '#a81812',
-  tinta: '#1d0b09',
-  krem: '#f7f0e4',
-  kuning: '#ffd23f',
-  hijau: '#00b09b',
+  hijau: '#0a9b7a',
+  oranye: '#f08a24',
   biru: '#0061ff',
   gelap: '#0f2027',
   bahaya: '#ff416c',
@@ -39,7 +38,7 @@ const ketik = (t: string, frame: number, mulai: number, laju = 2) =>
 const ease = (p: number) => 1 - Math.pow(1 - p, 3);
 
 // Durasi adegan (frame). HARUS berjumlah tepat 1770 (59 detik).
-const D = [120, 150, 180, 270, 240, 240, 240, 120, 120, 90];
+const D = [120, 150, 300, 210, 210, 150, 210, 210, 90, 120];
 const DARI = D.map((_, i) => D.slice(0, i).reduce((a, b) => a + b, 0));
 if (D.reduce((a, b) => a + b, 0) !== 1770) {
   throw new Error('Total durasi adegan harus tepat 1770 frame (59 detik)');
@@ -49,52 +48,24 @@ if (D.reduce((a, b) => a + b, 0) !== 1770) {
 
 const posisi = (top: number): React.CSSProperties => ({position: 'absolute', top, left: 0, right: 0});
 
-type Tema = 'merah' | 'krem';
-
-const Latar: React.FC<{tema: Tema; children?: React.ReactNode}> = ({tema, children}) => {
-  const frame = useCurrentFrame();
-  const g = Math.sin(frame / 60) * 30;
-  const merah = tema === 'merah';
-  return (
-    <AbsoluteFill style={{background: merah ? C.merah : C.krem, fontFamily: 'sans-serif', overflow: 'hidden'}}>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: merah
-            ? 'repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 24px, transparent 24px, transparent 60px)'
-            : 'radial-gradient(rgba(217,43,34,0.12) 2px, transparent 2.5px)',
-          backgroundSize: merah ? undefined : '44px 44px',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          width: 820,
-          height: 820,
-          borderRadius: 410,
-          right: -320 + g,
-          top: -300,
-          background: merah ? C.merahGelap : C.merah,
-          opacity: merah ? 0.55 : 0.16,
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          width: 520,
-          height: 520,
-          borderRadius: 260,
-          left: -220 - g,
-          bottom: -180,
-          background: C.kuning,
-          opacity: merah ? 0.3 : 0.4,
-        }}
-      />
-      {children}
-    </AbsoluteFill>
-  );
-};
+const Latar: React.FC<{children?: React.ReactNode}> = ({children}) => (
+  <AbsoluteFill style={{background: C.kertas, fontFamily: 'sans-serif', overflow: 'hidden'}}>
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage:
+          'repeating-linear-gradient(to bottom, transparent 0px, transparent 71px, rgba(0,97,255,0.16) 71px, rgba(0,97,255,0.16) 73px)',
+      }}
+    />
+    <div style={{position: 'absolute', top: 0, bottom: 0, left: 96, width: 4, background: 'rgba(217,43,34,0.45)'}} />
+    <div style={{position: 'absolute', top: 0, bottom: 0, left: 108, width: 2, background: 'rgba(217,43,34,0.3)'}} />
+    {[260, 940, 1620].map((y) => (
+      <div key={y} style={{position: 'absolute', left: 26, top: y, width: 34, height: 34, borderRadius: 17, background: 'rgba(27,31,59,0.18)'}} />
+    ))}
+    {children}
+  </AbsoluteFill>
+);
 
 const Adegan: React.FC<{dari: number; durasi: number; children: React.ReactNode}> = ({dari, durasi, children}) => (
   <Sequence from={dari} durationInFrames={durasi}>
@@ -106,42 +77,40 @@ const AdeganDalam: React.FC<{children: React.ReactNode}> = ({children}) => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
   const o = interpolate(frame, [0, 5, durationInFrames - 5, durationInFrames], [0, 1, 1, 0], clamp);
-  const geser = interpolate(frame, [0, 12], [0, 1], clamp);
+  const sapu = interpolate(frame, [0, 13], [-1300, 1300], clamp);
   return (
     <AbsoluteFill>
       <AbsoluteFill style={{opacity: o}}>{children}</AbsoluteFill>
       <div
         style={{
           position: 'absolute',
-          left: 0,
-          right: 0,
-          top: -40,
-          height: 1000,
-          background: C.tinta,
-          transform: `translateY(${-100 + geser * -1100}%)`,
-          opacity: frame < 14 ? 1 : 0,
+          top: 0,
+          bottom: 0,
+          left: sapu,
+          width: 1200,
+          background: `linear-gradient(100deg, transparent, ${C.stabilo} 35%, ${C.stabilo} 65%, transparent)`,
+          opacity: frame < 15 ? 0.95 : 0,
+          transform: 'skewX(-12deg)',
         }}
       />
     </AbsoluteFill>
   );
 };
 
-// Teks besar kata demi kata. tema 'merah': teks putih, sorot kuning. tema 'krem': teks tinta, sorot merah.
+// Teks kata demi kata; kata penting diberi stabilo kuning
 const Teks: React.FC<{
-  tema: Tema;
   kata: string[];
   sorot?: number[];
   ukuran?: number;
   mulai?: number;
   jeda?: number;
-}> = ({tema, kata, sorot = [], ukuran = 84, mulai = 4, jeda = 5}) => {
+}> = ({kata, sorot = [], ukuran = 84, mulai = 4, jeda = 5}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const merah = tema === 'merah';
   return (
-    <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 16px', padding: '0 50px'}}>
+    <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 16px', padding: '0 70px'}}>
       {kata.map((k, i) => {
-        const s = spring({frame: Math.max(0, frame - (mulai + i * jeda)), fps, config: {damping: 11}});
+        const s = spring({frame: Math.max(0, frame - (mulai + i * jeda)), fps, config: {damping: 12}});
         const hi = sorot.includes(i);
         return (
           <span
@@ -149,13 +118,11 @@ const Teks: React.FC<{
             style={{
               fontSize: ukuran,
               fontWeight: 900,
-              padding: '0 18px',
-              borderRadius: 16,
-              background: hi ? (merah ? C.kuning : C.merah) : 'transparent',
-              color: hi ? (merah ? C.tinta : 'white') : merah ? 'white' : C.tinta,
+              padding: '0 14px',
+              color: C.tinta,
+              background: hi ? `linear-gradient(transparent 18%, ${C.stabilo} 18%, ${C.stabilo} 92%, transparent 92%)` : 'transparent',
               opacity: s,
-              transform: `translateY(${(1 - s) * 40}px) scale(${0.7 + 0.3 * s}) rotate(${hi ? -2 : 0}deg)`,
-              textShadow: !hi && merah ? '0 5px 0 rgba(0,0,0,0.18)' : 'none',
+              transform: `translateY(${(1 - s) * 40}px) scale(${0.75 + 0.25 * s}) rotate(${hi ? -1.5 : 0}deg)`,
             }}
           >
             {k}
@@ -166,14 +133,14 @@ const Teks: React.FC<{
   );
 };
 
-// Stiker teks (kuning, bergaris tinta)
-const Stiker: React.FC<{teks: string; mulai: number; top: number; rot?: number; ukuran?: number; warna?: string; tulisan?: string}> = ({
+// Catatan tempel kuning
+const Catatan: React.FC<{teks: string; mulai: number; top?: number; rot?: number; ukuran?: number; warna?: string; tulisan?: string}> = ({
   teks,
   mulai,
-  top,
-  rot = -3,
-  ukuran = 54,
-  warna = C.kuning,
+  top = 1560,
+  rot = -2,
+  ukuran = 52,
+  warna = C.stabilo,
   tulisan = C.tinta,
 }) => {
   const frame = useCurrentFrame();
@@ -183,669 +150,571 @@ const Stiker: React.FC<{teks: string; mulai: number; top: number; rot?: number; 
     <div style={{position: 'absolute', top, left: 0, right: 0, display: 'flex', justifyContent: 'center'}}>
       <div
         style={{
-          padding: '16px 40px',
-          borderRadius: 22,
+          position: 'relative',
+          padding: '24px 46px',
           background: warna,
           color: tulisan,
-          border: `6px solid ${C.tinta}`,
           fontSize: ukuran,
           fontWeight: 900,
-          boxShadow: `10px 10px 0 ${C.tinta}`,
+          boxShadow: '0 16px 34px rgba(27,31,59,0.28)',
           opacity: s,
-          transform: `scale(${0.4 + 0.6 * s}) rotate(${rot}deg)`,
+          transform: `scale(${0.5 + 0.5 * s}) rotate(${rot}deg)`,
         }}
       >
+        <div style={{position: 'absolute', top: -16, left: '50%', marginLeft: -60, width: 120, height: 32, background: 'rgba(255,255,255,0.65)', transform: 'rotate(-3deg)'}} />
         {teks}
       </div>
     </div>
   );
 };
 
-const Nomor: React.FC<{n: string; teks: string; tema: Tema}> = ({n, teks, tema}) => {
+const Nomor: React.FC<{n: string; teks: string}> = ({n, teks}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const s = spring({frame: Math.max(0, frame - 2), fps, config: {damping: 9}});
   return (
     <div style={{position: 'absolute', top: 70, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 26, opacity: s, transform: `scale(${0.6 + 0.4 * s})`}}>
-      <div
-        style={{
-          width: 130,
-          height: 130,
-          borderRadius: 65,
-          background: tema === 'merah' ? C.kuning : C.merah,
-          color: tema === 'merah' ? C.tinta : 'white',
-          border: `7px solid ${C.tinta}`,
-          fontSize: 88,
-          fontWeight: 900,
-          textAlign: 'center',
-          lineHeight: '116px',
-          boxShadow: `8px 8px 0 ${C.tinta}`,
-        }}
-      >
-        {n}
-      </div>
-      <div style={{fontSize: 70, fontWeight: 900, color: tema === 'merah' ? 'white' : C.tinta}}>{teks}</div>
+      <div style={{width: 128, height: 128, borderRadius: 64, background: C.merah, color: 'white', fontSize: 86, fontWeight: 900, textAlign: 'center', lineHeight: '128px', boxShadow: '0 10px 24px rgba(217,43,34,0.4)'}}>{n}</div>
+      <div style={{fontSize: 68, fontWeight: 900, color: C.tinta, background: `linear-gradient(transparent 60%, ${C.stabilo} 60%)`}}>{teks}</div>
     </div>
   );
 };
 
-
-const Pil: React.FC<{teks: string; kuning?: boolean}> = ({teks, kuning}) => {
+const Pil: React.FC<{teks: string}> = ({teks}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const s = spring({frame: Math.max(0, frame - 2), fps, config: {damping: 10}});
   return (
     <div style={{position: 'absolute', top: 80, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: s, transform: `scale(${0.7 + 0.3 * s})`}}>
-      <div style={{padding: '18px 44px', borderRadius: 999, background: kuning ? C.kuning : C.tinta, color: kuning ? C.tinta : 'white', border: `6px solid ${C.tinta}`, boxShadow: `8px 8px 0 ${C.tinta}`, fontSize: 58, fontWeight: 900, letterSpacing: 3}}>
-        {teks}
-      </div>
+      <div style={{padding: '16px 44px', borderRadius: 999, background: C.tinta, color: 'white', fontSize: 52, fontWeight: 900, letterSpacing: 3}}>{teks}</div>
     </div>
   );
 };
 
-const Catatan: React.FC<{tema: Tema}> = ({tema}) => (
-  <div style={{position: 'absolute', left: 0, right: 0, bottom: 40, textAlign: 'center', fontSize: 28, color: tema === 'merah' ? 'rgba(255,255,255,0.75)' : 'rgba(29,11,9,0.55)'}}>
-    *Data contoh
-  </div>
+const DataContoh: React.FC = () => (
+  <div style={{position: 'absolute', left: 0, right: 0, bottom: 40, textAlign: 'center', fontSize: 28, color: 'rgba(27,31,59,0.55)'}}>*Data contoh</div>
 );
 
 const Progres: React.FC = () => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
-  return (
-    <div style={{position: 'absolute', left: 0, bottom: 0, height: 12, width: `${(frame / durationInFrames) * 100}%`, background: C.kuning, borderTop: `3px solid ${C.tinta}`}} />
-  );
+  return <div style={{position: 'absolute', left: 0, bottom: 0, height: 12, width: `${(frame / durationInFrames) * 100}%`, background: C.merah}} />;
 };
 
-const IkonLonceng: React.FC<{ukuran?: number; warna?: string}> = ({ukuran = 40, warna = 'white'}) => (
-  <svg width={ukuran} height={ukuran} viewBox="0 0 24 24">
-    <path d="M12 2a6 6 0 0 0-6 6v4l-2 3v1h16v-1l-2-3V8a6 6 0 0 0-6-6zm0 20a3 3 0 0 0 3-3H9a3 3 0 0 0 3 3z" fill={warna} />
-  </svg>
-);
+const Angka: React.FC<{nilai: number; mulai?: number; durasi?: number; awalan?: string}> = ({nilai, mulai = 0, durasi = 36, awalan = 'Rp '}) => {
+  const frame = useCurrentFrame();
+  const p = interpolate(frame, [mulai, mulai + durasi], [0, 1], clamp);
+  return <>{awalan + titik(nilai * ease(p))}</>;
+};
 
 /* ------------------------- HP lurus + layar aplikasi ------------------------- */
 
-const DESAIN_W = 656;
+const LEBAR_HP = 680;
+const TINGGI_HP = 1180;
+const DESAIN_W = LEBAR_HP - 24;
+const DESAIN_H = TINGGI_HP - 24;
 
-const Hp: React.FC<{
-  children: React.ReactNode;
-  lebar?: number;
-  atas?: number;
-  kiri?: number;
-  getar?: number;
-  mulai?: number;
-}> = ({children, lebar = 680, atas = 400, kiri, getar = 0, mulai = 0}) => {
+const Hp: React.FC<{children: React.ReactNode; atas?: number}> = ({children, atas = 330}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const masuk = spring({frame: Math.max(0, frame - mulai), fps, config: {damping: 15}});
-  const tinggi = Math.round(lebar * 1.735);
-  const skala = (lebar - 24) / DESAIN_W;
-  const tinggiDesain = (tinggi - 24) / skala;
-  const g = getar > 0 ? Math.sin(frame * 2.4) * 10 * getar : 0;
+  const masuk = spring({frame, fps, config: {damping: 15}});
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: (kiri !== undefined ? kiri : (1080 - lebar) / 2) + g,
-        top: atas,
-        width: lebar,
-        height: tinggi,
-        opacity: masuk,
-        transform: `translateY(${(1 - masuk) * 170}px)`,
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          boxSizing: 'border-box',
-          borderRadius: 64,
-          border: `12px solid ${C.tinta}`,
-          background: '#f4f7fe',
-          overflow: 'hidden',
-          position: 'relative',
-          boxShadow: '0 40px 90px rgba(29,11,9,0.4)',
-        }}
-      >
-        <div style={{width: DESAIN_W, height: tinggiDesain, position: 'relative', transform: `scale(${skala})`, transformOrigin: 'top left'}}>
-          {children}
-        </div>
+    <div style={{position: 'absolute', left: (1080 - LEBAR_HP) / 2, top: atas, width: LEBAR_HP, height: TINGGI_HP, opacity: masuk, transform: `translateY(${(1 - masuk) * 170}px)`}}>
+      <div style={{width: '100%', height: '100%', boxSizing: 'border-box', borderRadius: 68, border: `12px solid ${C.tinta}`, background: '#f4f7fe', overflow: 'hidden', position: 'relative', boxShadow: '0 36px 80px rgba(27,31,59,0.35)'}}>
+        <div style={{width: DESAIN_W, height: DESAIN_H, position: 'relative'}}>{children}</div>
       </div>
     </div>
   );
 };
 
-const Header: React.FC<{judul: string; kanan?: React.ReactNode}> = ({judul, kanan}) => (
-  <div style={{height: 104, background: `linear-gradient(135deg, ${C.gelap}, #203a43)`, color: 'white', fontSize: 34, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px'}}>
+const Header: React.FC<{judul: string; online?: boolean}> = ({judul, online}) => (
+  <div style={{height: 104, background: `linear-gradient(135deg, ${C.gelap}, #203a43)`, color: 'white', fontSize: 34, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px'}}>
     <span>{judul}</span>
-    {kanan}
+    {online ? <span style={{fontSize: 20, padding: '6px 16px', borderRadius: 999, background: '#00b09b'}}>ONLINE</span> : null}
   </div>
 );
 
-const Online: React.FC = () => (
-  <span style={{fontSize: 20, padding: '6px 16px', borderRadius: 999, background: C.hijau}}>ONLINE</span>
-);
-
-const NavBawah: React.FC = () => (
+const NavBawah: React.FC<{aktif: number}> = ({aktif}) => (
   <div style={{position: 'absolute', left: 0, right: 0, bottom: 0, height: 96, background: 'white', borderTop: '2px solid #e3e8f3', display: 'flex'}}>
     {['Dasbor', 'Kasir', 'Stok'].map((t, i) => (
-      <div key={t} style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 25, fontWeight: 800, color: i === 1 ? C.biru : '#a0aabf', borderTop: i === 1 ? `6px solid ${C.biru}` : '6px solid transparent'}}>
-        {t}
-      </div>
+      <div key={t} style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 25, fontWeight: 800, color: aktif === i ? C.biru : '#a0aabf', borderTop: aktif === i ? `6px solid ${C.biru}` : '6px solid transparent'}}>{t}</div>
     ))}
   </div>
 );
 
-const Tombol: React.FC<{teks: string; w: string; tulisan?: string; skala?: number; kecil?: boolean; flex?: number}> = ({
-  teks,
-  w,
-  tulisan = 'white',
-  skala = 1,
-  kecil,
-  flex = 1,
-}) => (
-  <div style={{flex, minWidth: 0, height: 64, borderRadius: 16, background: w, color: tulisan, fontSize: kecil ? 22 : 26, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `scale(${skala})`, whiteSpace: 'nowrap', padding: '0 10px'}}>
-    {teks}
+const Kotak: React.FC<{label: string; nilai: React.ReactNode; grad: string; denyut?: number}> = ({label, nilai, grad, denyut = 0}) => (
+  <div style={{flex: 1, minWidth: 0, boxSizing: 'border-box', borderRadius: 26, padding: '20px 22px', background: grad, color: 'white', transform: `scale(${1 + 0.06 * denyut})`, boxShadow: denyut > 0 ? '0 0 0 8px rgba(255,225,77,0.8)' : 'none'}}>
+    <div style={{fontSize: 22, fontWeight: 700, opacity: 0.92}}>{label}</div>
+    <div style={{fontSize: 32, fontWeight: 900, marginTop: 4}}>{nilai}</div>
   </div>
 );
 
-const PRODUK = [
-  {nama: 'Roti Tawar', harga: 14000, w: '#f0a35e', h: 'RT'},
-  {nama: 'Mie Goreng Instan', harga: 3500, w: '#e8524a', h: 'MG'},
-  {nama: 'Kopi Susu Botol', harga: 15000, w: '#8a5a44', h: 'KS'},
-  {nama: 'Air Mineral 600 ml', harga: 4000, w: '#4aa3df', h: 'AM'},
-];
-
-const GridProduk: React.FC<{sorot?: string}> = ({sorot = ''}) => (
-  <div style={{display: 'flex', flexWrap: 'wrap', gap: 16}}>
-    {PRODUK.map((p) => (
-      <div key={p.nama} style={{width: 296, boxSizing: 'border-box', background: 'white', borderRadius: 18, overflow: 'hidden', border: `3px solid ${sorot === p.nama ? C.biru : '#f0f0f0'}`}}>
-        <div style={{height: 120, background: `linear-gradient(135deg, ${p.w}, ${p.w}aa)`, color: 'white', fontSize: 44, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{p.h}</div>
-        <div style={{padding: '10px 14px 14px'}}>
-          <div style={{fontSize: 22, fontWeight: 800, color: '#2b2b2b'}}>{p.nama}</div>
-          <div style={{fontSize: 24, fontWeight: 900, color: C.biru, marginTop: 2}}>Rp {titik(p.harga)}</div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-// Layar utama pemilik: tombol link toko + lonceng pesanan masuk
-const LayarUtama: React.FC<{badge: number; linkTekan?: number; lonceng?: number}> = ({badge, linkTekan = 0, lonceng = 0}) => (
+const LayarDasbor: React.FC<{
+  laba: number;
+  catatTekan?: number;
+  laporanTekan?: number;
+  denyutLaba?: number;
+}> = ({laba, catatTekan = 0, laporanTekan = 0, denyutLaba = 0}) => (
   <div style={{width: '100%', height: '100%', position: 'relative'}}>
-    <Header judul="Warung Berkah" kanan={<Online />} />
-    <div style={{padding: '20px 24px'}}>
-      <div style={{display: 'flex', gap: 14, marginBottom: 20}}>
-        <div style={{flex: 1, height: 74, borderRadius: 18, border: `3px solid ${C.biru}`, background: linkTekan > 0 ? C.biru : 'white', color: linkTekan > 0 ? 'white' : C.biru, fontSize: 24, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `scale(${1 - 0.05 * linkTekan})`}}>
-          Salin Link Toko
-        </div>
-        <div style={{flex: 1, height: 74, borderRadius: 18, background: C.gelap, color: 'white', fontSize: 24, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transform: `scale(${1 + 0.12 * lonceng})`, boxShadow: lonceng > 0 ? '0 0 0 10px rgba(255,210,63,0.6)' : 'none'}}>
-          <IkonLonceng ukuran={30} />
-          Pesanan Masuk
-          {badge > 0 ? (
-            <span style={{background: C.bahaya, color: 'white', borderRadius: 14, padding: '2px 12px', fontSize: 22, fontWeight: 900}}>{badge}</span>
-          ) : null}
+    <Header judul="Warung Berkah" online />
+    <div style={{padding: '22px 24px'}}>
+      <div style={{display: 'flex', gap: 16, marginBottom: 16}}>
+        <Kotak label="Omset Hari Ini" nilai="Rp 1.500.000" grad="linear-gradient(135deg,#f5af19,#f12711)" />
+        <Kotak label="Laba Hari Ini" nilai={'Rp ' + titik(laba)} grad="linear-gradient(135deg,#00b09b,#96c93d)" denyut={denyutLaba} />
+      </div>
+      <div style={{display: 'flex', gap: 16, marginBottom: 22}}>
+        <Kotak label="Total TRX" nilai="64" grad="linear-gradient(135deg,#8e2de2,#4a00e0)" />
+        <div style={{flex: 1, borderRadius: 26, padding: '20px 22px', background: C.gelap, color: 'white', transform: `scale(${1 - 0.06 * catatTekan})`, boxShadow: catatTekan > 0 ? '0 0 0 8px rgba(255,225,77,0.9)' : 'none'}}>
+          <div style={{fontSize: 26, fontWeight: 800}}>Catat Keluar</div>
+          <div style={{fontSize: 19, opacity: 0.8, marginTop: 4}}>Input pengeluaran hari ini</div>
         </div>
       </div>
-      <GridProduk />
-    </div>
-    <NavBawah />
-  </div>
-);
-
-const KartuPesanan: React.FC<{
-  status: 'baru' | 'proses';
-  sorot?: string;
-  tekan?: string;
-}> = ({status, sorot = '', tekan = ''}) => {
-  const kotak = (k: string): React.CSSProperties => ({
-    outline: sorot === k ? `5px solid ${C.merah}` : '5px solid transparent',
-    outlineOffset: 4,
-    borderRadius: 10,
-  });
-  const baru = status === 'baru';
-  return (
-    <div style={{background: '#f9f9f9', border: `3px solid ${baru ? C.biru : '#eee'}`, borderRadius: 22, padding: 22}}>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10}}>
-        <b style={{fontSize: 24}}>#A1B2 · 10:42</b>
-        <span style={{background: baru ? C.biru : '#eee', color: baru ? 'white' : '#666', borderRadius: 10, padding: '4px 14px', fontSize: 19, fontWeight: 800}}>
-          {baru ? 'BARU' : 'SUDAH DIPROSES'}
-        </span>
-      </div>
-      <div style={{...kotak('nama'), fontSize: 28, fontWeight: 800}}>Bu Sari</div>
-      <div style={{fontSize: 21, color: '#555', marginTop: 2}}>WA: 0812-0000-0000</div>
-      <div style={{...kotak('alamat'), fontSize: 21, color: '#555', marginTop: 6}}>Jl. Contoh No. 1</div>
-      <div style={{...kotak('catatan'), fontSize: 21, color: '#555', marginTop: 6}}>Catatan: Antar sore ya</div>
-      <div style={{...kotak('barang'), borderTop: '2px dashed #ddd', marginTop: 14, paddingTop: 10}}>
+      <div style={{fontSize: 26, fontWeight: 900, color: C.gelap, margin: '0 4px 12px'}}>Menu Cepat</div>
+      <div style={{display: 'flex', gap: 16}}>
         {[
-          ['2x Kopi Susu Botol', 30000],
-          ['1x Roti Tawar', 14000],
-        ].map(([n, h]) => (
-          <div key={String(n)} style={{display: 'flex', justifyContent: 'space-between', fontSize: 23, marginTop: 4}}>
-            <span>{n}</span>
-            <span>Rp {titik(Number(h))}</span>
+          {t: 'Laporan', s: 'Grafik & Analitik', w: C.biru, tekan: laporanTekan},
+          {t: 'Pengaturan', s: 'Toko & Backup', w: '#8e2de2', tekan: 0},
+        ].map((m) => (
+          <div key={m.t} style={{flex: 1, boxSizing: 'border-box', borderRadius: 24, padding: '22px', background: 'white', boxShadow: m.tekan > 0 ? `0 0 0 8px rgba(255,225,77,0.9)` : '0 8px 24px rgba(15,32,39,0.07)', transform: `scale(${1 - 0.05 * m.tekan})`}}>
+            <div style={{width: 54, height: 54, borderRadius: 16, background: m.w, opacity: 0.18}} />
+            <div style={{fontSize: 28, fontWeight: 900, color: C.gelap, marginTop: 12}}>{m.t}</div>
+            <div style={{fontSize: 20, color: C.abu, marginTop: 2}}>{m.s}</div>
           </div>
         ))}
       </div>
-      <div style={{...kotak('total'), display: 'flex', justifyContent: 'space-between', fontSize: 25, fontWeight: 900, marginTop: 12}}>
-        <span>Total (belum ongkir)</span>
-        <span>Rp 44.000</span>
-      </div>
-      <div style={{display: 'flex', gap: 10, marginTop: 18}}>
-        <div style={{flex: 1.5, height: 62, borderRadius: 14, background: C.biru, color: 'white', fontSize: baru ? 26 : 20, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `scale(${tekan === 'proses' ? 0.93 : 1})`, textAlign: 'center'}}>
-          {baru ? 'Proses' : 'Muat Ulang ke Kasir'}
-        </div>
-        <div style={{flex: 1, height: 62, borderRadius: 14, background: '#e8f7ee', color: '#128C7E', fontSize: 22, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `scale(${tekan === 'wa' ? 0.93 : 1})`}}>Chat WA</div>
-        <div style={{flex: 1, height: 62, borderRadius: 14, background: '#f0f4ff', color: C.biru, fontSize: 22, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `scale(${tekan === 'peta' ? 0.93 : 1})`}}>Peta</div>
-        <div style={{flex: 1, height: 62, borderRadius: 14, background: '#ffebee', color: '#d32f2f', fontSize: 22, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Batal</div>
-      </div>
     </div>
-  );
-};
-
-// Bottom sheet "Pesanan Masuk"
-const SheetPesanan: React.FC<{buka: number; children: React.ReactNode}> = ({buka, children}) => (
-  <div style={{position: 'absolute', inset: 0, background: `rgba(15,32,39,${0.5 * buka})`, visibility: buka > 0.01 ? 'visible' : 'hidden'}}>
-    <div style={{position: 'absolute', left: 0, right: 0, bottom: 0, top: 150, background: 'white', borderRadius: '34px 34px 0 0', padding: '26px 26px', transform: `translateY(${(1 - buka) * 900}px)`}}>
-      <div style={{display: 'flex', alignItems: 'center', gap: 12, fontSize: 32, fontWeight: 900, color: C.gelap, marginBottom: 8}}>
-        <IkonLonceng ukuran={34} warna={C.gelap} />
-        Pesanan Masuk
-      </div>
-      <div style={{fontSize: 19, color: C.abu, marginBottom: 14, lineHeight: 1.3}}>
-        Pesanan dari katalog online. Ketuk Proses untuk mengisi keranjang kasir, tambahkan ongkir bila perlu, lalu bayar seperti biasa.
-      </div>
-      <div style={{transform: 'scale(1.12)', transformOrigin: 'top left', width: `${100 / 1.12}%`}}>{children}</div>
-    </div>
+    <NavBawah aktif={0} />
   </div>
 );
 
-const Dialog: React.FC<{opa: number; judul: string; pesan: string; hijau?: boolean}> = ({opa, judul, pesan, hijau}) => (
-  <div style={{position: 'absolute', inset: 0, background: `rgba(15,32,39,${0.6 * opa})`, display: 'flex', alignItems: 'center', justifyContent: 'center', visibility: opa > 0.01 ? 'visible' : 'hidden'}}>
-    <div style={{width: 540, background: 'white', borderRadius: 32, padding: '34px 30px 28px', textAlign: 'center', opacity: opa, transform: `scale(${0.8 + 0.2 * opa})`}}>
-      <div style={{width: 80, height: 80, borderRadius: 40, background: hijau ? C.hijau : C.kuning, color: hijau ? 'white' : C.tinta, fontSize: 50, fontWeight: 900, lineHeight: '80px', margin: '0 auto 16px'}}>{hijau ? (
-          <svg width="46" height="46" viewBox="0 0 100 100" style={{marginTop: 17}}>
-            <path d="M24 52 L44 72 L78 30" stroke="white" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </svg>
-        ) : (
-          '!'
-        )}</div>
-      <div style={{fontSize: 34, fontWeight: 900, color: C.gelap}}>{judul}</div>
-      <div style={{fontSize: 24, color: '#6b7a99', marginTop: 12, lineHeight: 1.35}}>{pesan}</div>
-      <div style={{marginTop: 22, padding: '14px 0', borderRadius: 16, background: C.biru, color: 'white', fontSize: 26, fontWeight: 800}}>OK</div>
-    </div>
-  </div>
-);
+const KATEGORI = ['Beli barang/bahan', 'Gaji', 'Sewa/listrik/air', 'Kemasan', 'Transport/ongkir', 'Promosi', 'Peralatan', 'Lain-lain'];
 
 /* ================= ADEGAN 1: HOOK ================= */
 
 const Hook: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const ting = spring({frame: frame - 4, fps, config: {damping: 7}});
-  const kartu = spring({frame: frame - 14, fps, config: {damping: 11}});
-  const goyang = Math.sin(frame * 1.6) * 10 * interpolate(frame, [14, 60], [1, 0], clamp);
+  const acak = (i: number) => String(Math.floor(((Math.sin(frame * 1.7 + i * 7.3) + 1) / 2) * 9.99));
+  const baris = [0, 1, 2, 3, 4, 5].map(acak);
+  const stempel = spring({frame: frame - 70, fps, config: {damping: 8}});
+  const kartu = spring({frame: frame - 24, fps, config: {damping: 11}});
   return (
-    <Latar tema="merah">
-      <div style={{...posisi(230), textAlign: 'center', fontSize: 270, fontWeight: 900, color: 'white', transform: `scale(${ting}) rotate(-5deg)`, textShadow: `12px 12px 0 ${C.tinta}`}}>
-        TING!
+    <Latar>
+      <div style={posisi(210)}>
+        <Teks kata={['Untung', 'hari', 'ini', 'berapa?']} sorot={[3]} ukuran={110} />
       </div>
       <div
         style={{
           position: 'absolute',
-          top: 640,
-          left: 110,
-          width: 860,
-          boxSizing: 'border-box',
-          padding: '30px 36px',
+          top: 760,
+          left: 150,
+          width: 780,
+          padding: '40px 0',
+          textAlign: 'center',
           background: 'white',
-          borderRadius: 34,
           border: `6px solid ${C.tinta}`,
+          borderRadius: 24,
           boxShadow: `12px 12px 0 ${C.tinta}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 28,
           opacity: kartu,
-          transform: `translateY(${(1 - kartu) * -200}px)`,
+          transform: `scale(${0.6 + 0.4 * kartu})`,
         }}
       >
-        <div style={{transform: `rotate(${goyang}deg)`, background: C.merah, borderRadius: 24, padding: 18}}>
-          <IkonLonceng ukuran={84} />
-        </div>
-        <div>
-          <div style={{fontSize: 54, fontWeight: 900, color: C.tinta}}>Pesanan Masuk</div>
-          <div style={{fontSize: 38, fontWeight: 700, color: '#6b5a55', marginTop: 4}}>Bu Sari checkout 3 barang</div>
+        <div style={{fontSize: 34, fontWeight: 800, letterSpacing: 6, color: C.abu}}>UNTUNG HARI INI</div>
+        <div style={{fontSize: 120, fontWeight: 900, color: C.tinta, fontFamily: 'monospace'}}>
+          Rp {baris[0]}{baris[1]}{baris[2]}.{baris[3]}{baris[4]}{baris[5]}
         </div>
       </div>
-      <Stiker teks="Pembeli checkout!" mulai={40} top={960} warna="white" />
-      <Stiker teks="Terus ngapain?" mulai={56} top={1130} />
-      <Stiker teks="Gampang, 4 langkah!" mulai={78} top={1300} rot={2} />
-      <div style={{position: 'absolute', top: 1520, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 36}}>
-        {['1', '2', '3', '4'].map((n, i) => {
-          const s = spring({frame: Math.max(0, frame - (90 + i * 6)), fps, config: {damping: 8}});
+      <div
+        style={{
+          position: 'absolute',
+          top: 1190,
+          left: 250,
+          width: 580,
+          padding: '20px 0',
+          textAlign: 'center',
+          border: `10px solid ${C.merah}`,
+          borderRadius: 20,
+          color: C.merah,
+          fontSize: 100,
+          fontWeight: 900,
+          letterSpacing: 4,
+          background: 'rgba(255,255,255,0.7)',
+          opacity: stempel,
+          transform: `rotate(-6deg) scale(${2.4 - 1.4 * stempel})`,
+        }}
+      >
+        KIRA-KIRA
+      </div>
+    </Latar>
+  );
+};
+
+/* ================= ADEGAN 2: SEBAB ================= */
+
+const Sebab: React.FC = () => {
+  const frame = useCurrentFrame();
+  const nota = [
+    {t: 'Rp 25.000', x: 200, d: 20},
+    {t: 'Rp 60.000', x: 520, d: 34},
+    {t: 'Rp 15.000', x: 780, d: 48},
+    {t: 'Rp 90.000', x: 330, d: 62},
+    {t: 'Rp 40.000', x: 640, d: 76},
+  ];
+  return (
+    <Latar>
+      <div style={posisi(180)}>
+        <Teks kata={['Sebabnya:', 'pengeluaran', 'nggak', 'dicatat']} sorot={[1, 3]} ukuran={86} />
+      </div>
+      {nota.map((n, i) => {
+        const t = frame - n.d;
+        const o = interpolate(t, [0, 8, 50, 70], [0, 1, 1, 0], clamp);
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: n.x,
+              top: 1050 - Math.max(0, t) * 5,
+              padding: '20px 32px',
+              background: 'white',
+              border: `4px dashed ${C.tinta}`,
+              fontSize: 44,
+              fontWeight: 900,
+              color: C.merah,
+              opacity: o,
+              transform: `rotate(${(i - 2) * 6}deg)`,
+            }}
+          >
+            -{n.t}
+          </div>
+        );
+      })}
+      <Catatan teks="Padahal gampang banget" mulai={96} top={1480} />
+    </Latar>
+  );
+};
+
+/* ================= ADEGAN 3: LANGKAH 1 - CATAT KELUAR ================= */
+
+const CatatKeluar: React.FC = () => {
+  const frame = useCurrentFrame();
+  const catatTekan = interpolate(frame, [36, 42, 52], [0, 1, 0], clamp);
+  const sheet = interpolate(frame, [52, 72, 224, 244], [0, 1, 1, 0], clamp);
+  const nominal = ketik('50000', frame, 84, 6);
+  const pilih = frame >= 150;
+  const tekanSimpan = frame >= 196 && frame < 206 ? 0.94 : 1;
+  const toast = interpolate(frame, [236, 248, 280, 296], [0, 1, 1, 0], clamp);
+  return (
+    <Latar>
+      <Nomor n="1" teks="Ketuk Catat Keluar" />
+      <Hp>
+        <LayarDasbor laba={frame >= 244 ? 600000 - 50000 : 600000} catatTekan={catatTekan} />
+        <div style={{position: 'absolute', inset: 0, background: `rgba(15,32,39,${0.55 * sheet})`, visibility: sheet > 0.01 ? 'visible' : 'hidden'}}>
+          <div style={{position: 'absolute', left: 0, right: 0, bottom: 0, background: 'white', borderRadius: '36px 36px 0 0', padding: '30px 28px 36px', transform: `translateY(${(1 - sheet) * 620}px)`}}>
+            <div style={{fontSize: 34, fontWeight: 900, color: C.gelap, marginBottom: 16}}>Catat Keluar</div>
+            <div style={{fontSize: 21, fontWeight: 800, color: '#2b2b2b', marginBottom: 6}}>Nominal</div>
+            <div style={{height: 68, borderRadius: 16, border: `3px solid ${C.biru}`, display: 'flex', alignItems: 'center', padding: '0 20px', fontSize: 32, color: '#2b2b2b', marginBottom: 16}}>
+              {nominal ? 'Rp ' + titik(Number(nominal)) : 'Rp...'}
+            </div>
+            <div style={{fontSize: 21, fontWeight: 800, color: '#2b2b2b', marginBottom: 8}}>Kategori</div>
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 18}}>
+              {['Beli barang/bahan', 'Kemasan', 'Sewa/listrik/air', 'Transport/ongkir'].map((k) => (
+                <div key={k} style={{padding: '10px 20px', borderRadius: 999, fontSize: 22, fontWeight: 800, background: pilih && k === 'Kemasan' ? C.biru : '#eef2f9', color: pilih && k === 'Kemasan' ? 'white' : '#6b7a99'}}>{k}</div>
+              ))}
+            </div>
+            <div style={{height: 78, borderRadius: 20, background: C.merah, color: 'white', fontSize: 28, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `scale(${tekanSimpan})`}}>Simpan Pengeluaran</div>
+          </div>
+        </div>
+        <div style={{position: 'absolute', left: 80, right: 80, bottom: 130, padding: '20px 0', borderRadius: 40, background: C.hijau, color: 'white', fontSize: 30, fontWeight: 800, textAlign: 'center', opacity: toast, transform: `translateY(${(1 - toast) * 60}px)`}}>
+          Pengeluaran tersimpan
+        </div>
+      </Hp>
+      {frame >= 56 && frame < 130 ? <Catatan teks="Isi nominal" mulai={56} /> : null}
+      {frame >= 130 && frame < 190 ? <Catatan teks="Pilih kategori" mulai={130} rot={2} /> : null}
+      {frame >= 190 && frame < 290 ? <Catatan teks="Simpan Pengeluaran" mulai={190} /> : null}
+      <DataContoh />
+    </Latar>
+  );
+};
+
+/* ================= ADEGAN 4: KATEGORI ================= */
+
+const Kategori: React.FC = () => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const warna = [C.merah, C.biru, C.hijau, C.oranye, '#8e2de2', C.bahaya, '#00a8c0', C.abu];
+  return (
+    <Latar>
+      <Pil teks="KATEGORI BIAYA" />
+      <div style={posisi(230)}>
+        <Teks kata={['Udah', 'disiapin', 'semua']} sorot={[1]} ukuran={96} />
+      </div>
+      <div style={{position: 'absolute', top: 500, left: 130, width: 830, display: 'flex', flexWrap: 'wrap', gap: 28, justifyContent: 'center'}}>
+        {KATEGORI.map((k, i) => {
+          const s = spring({frame: Math.max(0, frame - (14 + i * 14)), fps, config: {damping: 9}});
           return (
-            <div key={n} style={{width: 120, height: 120, borderRadius: 60, background: C.kuning, border: `6px solid ${C.tinta}`, fontSize: 76, fontWeight: 900, textAlign: 'center', lineHeight: '106px', color: C.tinta, boxShadow: `6px 6px 0 ${C.tinta}`, transform: `scale(${s})`, opacity: s}}>
-              {n}
+            <div
+              key={k}
+              style={{
+                width: 390,
+                boxSizing: 'border-box',
+                padding: '34px 24px',
+                background: warna[i],
+                color: 'white',
+                fontSize: 44,
+                fontWeight: 900,
+                textAlign: 'center',
+                borderRadius: 22,
+                border: `5px solid ${C.tinta}`,
+                boxShadow: `8px 8px 0 ${C.tinta}`,
+                opacity: s,
+                transform: `scale(${0.5 + 0.5 * s}) rotate(${(i % 2 === 0 ? -1.5 : 1.5) * (1 - s) * 6}deg)`,
+              }}
+            >
+              {k}
             </div>
           );
         })}
       </div>
+      <Catatan teks="Bahan, gaji, listrik, ongkir, promosi" mulai={130} top={1560} ukuran={44} />
     </Latar>
   );
 };
 
-/* ================= ADEGAN 2: PESANAN DATANG DARI LINK TOKO ================= */
+/* ================= ADEGAN 5: LABA IKUT BERUBAH ================= */
 
-const Dari: React.FC = () => {
+const LabaBerubah: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const bar = spring({frame: frame - 24, fps, config: {damping: 10}});
-  const tekan = frame >= 56 && frame < 66 ? 0.93 : 1;
-  const berhasil = interpolate(frame, [66, 76, 100, 108], [0, 1, 1, 0], clamp);
-  const terbang = interpolate(frame, [76, 110], [0, 1], clamp);
-  const tiba = frame >= 110;
-  const lonceng = interpolate(frame, [110, 120, 134], [0, 1, 0], clamp);
+  const laba = interpolate(frame, [70, 110], [600000, 350000], clamp);
+  const denyut = interpolate(frame, [70, 90, 112], [0, 1, 0], clamp);
+  const chip = spring({frame: frame - 56, fps, config: {damping: 9}});
   return (
-    <Latar tema="krem">
-      <Pil teks="DARI LINK TOKO" />
-      <div style={{position: 'absolute', top: 250, left: 60, width: 440, textAlign: 'center', fontSize: 44, fontWeight: 900, color: C.merah}}>HP pembeli</div>
-      <div style={{position: 'absolute', top: 250, left: 580, width: 440, textAlign: 'center', fontSize: 44, fontWeight: 900, color: C.tinta}}>Kasirmu</div>
-      <Hp lebar={440} kiri={60} atas={330}>
-        <div style={{width: '100%', height: '100%'}}>
-          <Header judul="Warung Berkah" />
-          <div style={{padding: 22}}>
-            <div style={{fontSize: 26, fontWeight: 900, color: C.gelap, marginBottom: 14}}>Katalog</div>
-            <GridProduk sorot="Kopi Susu Botol" />
-          </div>
-          <div style={{position: 'absolute', left: 22, right: 22, bottom: 26, height: 84, borderRadius: 22, background: C.biru, color: 'white', fontSize: 30, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: bar, transform: `scale(${tekan})`}}>
-            Checkout (3 item)
-          </div>
-        </div>
-        <Dialog opa={berhasil} judul="Pesanan terkirim" pesan="Pesanan diteruskan ke toko." hijau />
-      </Hp>
-      <Hp lebar={440} kiri={580} atas={330} mulai={20}>
-        <LayarUtama badge={tiba ? 1 : 0} lonceng={lonceng} />
-      </Hp>
-      <div
-        style={{
-          position: 'absolute',
-          left: 380 + terbang * 280,
-          top: 880 - Math.sin(terbang * Math.PI) * 170,
-          padding: '16px 30px',
-          borderRadius: 999,
-          background: C.merah,
-          color: 'white',
-          fontSize: 40,
-          fontWeight: 900,
-          border: `5px solid ${C.tinta}`,
-          boxShadow: `6px 6px 0 ${C.tinta}`,
-          opacity: terbang > 0 && terbang < 1 ? 1 : 0,
-        }}
-      >
-        pesanan
+    <Latar>
+      <Pil teks="LANGSUNG UPDATE" />
+      <div style={posisi(210)}>
+        <Teks kata={['Laba', 'Hari', 'Ini', 'ikut', 'berubah']} sorot={[0, 1, 2]} ukuran={86} />
       </div>
-      <Stiker teks="Masuk ke kasirmu" mulai={112} top={1460} rot={-2} />
-      <Catatan tema="krem" />
-    </Latar>
-  );
-};
-
-/* ================= ADEGAN 3: PESANAN MASUK ================= */
-
-const Masuk: React.FC = () => {
-  const frame = useCurrentFrame();
-  const badge = frame >= 50 ? 1 : 0;
-  const lonceng = interpolate(frame, [50, 60, 74], [0, 1, 0], clamp);
-  const getar = frame >= 50 && frame < 90 ? 1 : 0;
-  return (
-    <Latar tema="merah">
-      <Nomor n="1" teks="Cek pesanan" tema="merah" />
-      <Hp getar={getar} atas={290}>
-        <LayarUtama badge={badge} lonceng={lonceng} />
+      <Hp atas={430}>
+        <LayarDasbor laba={laba} denyutLaba={denyut} />
       </Hp>
-      {frame >= 50 && frame < 94 ? (
-        <>
-          <div style={{position: 'absolute', left: 90, top: 600, fontSize: 70, fontWeight: 900, color: C.kuning, transform: 'rotate(-12deg)'}}>bzzt</div>
-          <div style={{position: 'absolute', right: 90, top: 700, fontSize: 70, fontWeight: 900, color: C.kuning, transform: 'rotate(10deg)'}}>bzzt</div>
-        </>
-      ) : null}
-      <Stiker teks="Angka di sini nambah" mulai={54} top={1560} rot={-2} />
-      <Stiker teks="Aplikasi kebuka? HP bergetar" mulai={100} top={1730} rot={2} warna="white" ukuran={42} />
-    </Latar>
-  );
-};
-
-/* ================= ADEGAN 4: BACA PESANAN ================= */
-
-const Baca: React.FC = () => {
-  const frame = useCurrentFrame();
-  const buka = ease(interpolate(frame, [6, 30], [0, 1], clamp));
-  const urut = [
-    {k: 'nama', dari: 50, t: 'Siapa yang pesan'},
-    {k: 'alamat', dari: 80, t: 'Alamatnya'},
-    {k: 'catatan', dari: 110, t: 'Catatannya'},
-    {k: 'barang', dari: 140, t: 'Barang apa aja'},
-    {k: 'total', dari: 180, t: 'Totalnya'},
-  ];
-  const aktif = [...urut].reverse().find((u) => frame >= u.dari);
-  return (
-    <Latar tema="krem">
-      <Nomor n="1" teks="Buka & baca" tema="krem" />
-      <Hp atas={290}>
-        <LayarUtama badge={1} />
-        <SheetPesanan buka={buka}>
-          <KartuPesanan status="baru" sorot={aktif && frame < 225 ? aktif.k : ''} />
-        </SheetPesanan>
-      </Hp>
-      {aktif && frame < 225 ? <Stiker key={aktif.k} teks={aktif.t} mulai={aktif.dari} top={1560} /> : null}
-      {frame >= 225 ? <Stiker teks="Semua lengkap, nggak perlu nanya" mulai={225} top={1560} ukuran={46} warna={C.merah} tulisan="white" /> : null}
-      <Catatan tema="krem" />
-    </Latar>
-  );
-};
-
-/* ================= ADEGAN 5: PROSES ================= */
-
-const KeranjangBar: React.FC<{bump: number}> = ({bump}) => (
-  <div style={{position: 'absolute', left: 24, right: 24, bottom: 116, height: 96, borderRadius: 26, background: C.gelap, color: 'white', padding: '0 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transform: `scale(${1 + 0.06 * bump})`}}>
-    <div>
-      <div style={{fontSize: 34, fontWeight: 900}}>Rp 44.000</div>
-      <div style={{fontSize: 20, opacity: 0.8}}>3 Item Ditambahkan</div>
-    </div>
-    <div style={{background: 'white', color: C.gelap, padding: '12px 26px', borderRadius: 14, fontSize: 24, fontWeight: 900}}>Bayar &gt;</div>
-  </div>
-);
-
-const Proses: React.FC = () => {
-  const frame = useCurrentFrame();
-  const tekan = frame >= 24 && frame < 34 ? 'proses' : '';
-  const dialog = interpolate(frame, [38, 50, 128, 140], [0, 1, 1, 0], clamp);
-  const kasir = frame >= 142;
-  const bump = interpolate(frame, [148, 158, 170], [0, 1, 0], clamp);
-  return (
-    <Latar tema="merah">
-      <Nomor n="2" teks="Ketuk Proses" tema="merah" />
-      <Hp atas={290}>
-        {kasir ? (
-          <div style={{width: '100%', height: '100%', position: 'relative'}}>
-            <Header judul="Warung Berkah" kanan={<Online />} />
-            <div style={{padding: 22}}>
-              <GridProduk sorot="Kopi Susu Botol" />
-            </div>
-            <KeranjangBar bump={bump} />
-            <NavBawah />
-          </div>
-        ) : (
-          <>
-            <LayarUtama badge={1} />
-            <SheetPesanan buka={1}>
-              <KartuPesanan status="baru" tekan={tekan} />
-            </SheetPesanan>
-          </>
-        )}
-        <Dialog opa={dialog} judul="Pesanan Dimuat" pesan={'Pesanan Bu Sari sudah dimuat ke keranjang.\nTambahkan Ongkir bila perlu, lalu tekan Bayar.'} hijau />
-      </Hp>
-      {frame >= 56 && frame < 138 ? <Stiker teks="Ongkir? Tambahin aja" mulai={56} top={1560} /> : null}
-      {frame >= 148 ? <Stiker teks="Langsung masuk keranjang!" mulai={148} top={1560} /> : null}
-    </Latar>
-  );
-};
-
-/* ================= ADEGAN 6: CHAT WA DAN PETA ================= */
-
-const ChatWa: React.FC<{opa: number}> = ({opa}) => (
-  <div style={{position: 'absolute', inset: 0, background: '#efe7dd', opacity: opa, visibility: opa > 0.01 ? 'visible' : 'hidden'}}>
-    <div style={{height: 104, background: '#075e54', color: 'white', fontSize: 34, fontWeight: 800, display: 'flex', alignItems: 'center', padding: '0 28px', gap: 18}}>
-      <div style={{width: 56, height: 56, borderRadius: 28, background: 'linear-gradient(135deg,#0061ff,#60efff)', textAlign: 'center', lineHeight: '56px', fontSize: 24}}>BS</div>
-      Bu Sari
-    </div>
-    <div style={{position: 'absolute', left: 0, right: 0, bottom: 0, height: 100, background: '#f0f0f0', display: 'flex', alignItems: 'center', padding: '0 24px'}}>
-      <div style={{flex: 1, height: 64, borderRadius: 32, background: 'white', fontSize: 24, color: '#9aa', display: 'flex', alignItems: 'center', padding: '0 26px'}}>Ketik pesan</div>
-    </div>
-  </div>
-);
-
-const PetaLokasi: React.FC<{buka: number}> = ({buka}) => {
-  const frame = useCurrentFrame();
-  const denyut = 1 + Math.sin(frame / 5) * 0.08;
-  return (
-    <div style={{position: 'absolute', inset: 0, background: `rgba(15,32,39,${0.5 * buka})`, visibility: buka > 0.01 ? 'visible' : 'hidden'}}>
-      <div style={{position: 'absolute', left: 0, right: 0, bottom: 0, top: 260, background: 'white', borderRadius: '34px 34px 0 0', padding: '26px', transform: `translateY(${(1 - buka) * 800}px)`}}>
-        <div style={{fontSize: 32, fontWeight: 900, color: C.gelap, marginBottom: 6}}>Lokasi Pelanggan</div>
-        <div style={{fontSize: 19, color: C.abu, marginBottom: 14}}>Lokasi Bu Sari (-6.2000, 106.8000).</div>
-        <div style={{height: 300, borderRadius: 22, background: '#dfe9e3', position: 'relative', overflow: 'hidden', marginBottom: 16}}>
-          <div style={{position: 'absolute', left: 0, right: 0, top: 120, height: 26, background: 'white', transform: 'rotate(-8deg)'}} />
-          <div style={{position: 'absolute', left: 200, top: 0, bottom: 0, width: 26, background: 'white', transform: 'rotate(12deg)'}} />
-          <div style={{position: 'absolute', left: 60, top: 40, width: 120, height: 70, background: '#c9dccf', borderRadius: 10}} />
-          <div style={{position: 'absolute', left: 360, top: 170, width: 160, height: 90, background: '#c9dccf', borderRadius: 10}} />
-          <svg width="70" height="90" viewBox="0 0 24 30" style={{position: 'absolute', left: 250, top: 70, transform: `scale(${denyut})`, transformOrigin: 'bottom center'}}>
-            <path d="M12 0C6 0 2 4.5 2 10c0 7 10 18 10 18s10-11 10-18C22 4.5 18 0 12 0z" fill={C.merah} />
-            <circle cx="12" cy="10" r="4" fill="white" />
-          </svg>
-        </div>
-        <div style={{display: 'grid', gap: 12}}>
-          <Tombol teks="Buka di Google Maps" w={C.biru} />
-          <Tombol teks="Salin Koordinat" w="#f0f4ff" tulisan={C.biru} />
-          <Tombol teks="Buka Peta Web (di dalam aplikasi)" w="#f5f5f5" tulisan="#555" kecil />
-        </div>
+      <div style={{position: 'absolute', left: 640, top: 760, padding: '16px 34px', borderRadius: 999, background: C.merah, color: 'white', fontSize: 52, fontWeight: 900, border: `5px solid ${C.tinta}`, opacity: chip * (frame < 120 ? 1 : 0), transform: `scale(${chip}) rotate(6deg)`}}>
+        − Rp 250.000
       </div>
-    </div>
-  );
-};
-
-const WaPeta: React.FC = () => {
-  const frame = useCurrentFrame();
-  const sheet = ease(interpolate(frame, [4, 24], [0, 1], clamp));
-  const tekan = frame >= 36 && frame < 46 ? 'wa' : frame >= 120 && frame < 130 ? 'peta' : '';
-  const wa = interpolate(frame, [48, 60, 104, 116], [0, 1, 1, 0], clamp);
-  const peta = ease(interpolate(frame, [134, 158], [0, 1], clamp));
-  return (
-    <Latar tema="krem">
-      <Nomor n="3" teks="Konfirmasi & cek lokasi" tema="krem" />
-      <Hp atas={290}>
-        <LayarUtama badge={1} />
-        <SheetPesanan buka={sheet}>
-          <KartuPesanan status="baru" tekan={tekan} />
-        </SheetPesanan>
-        <ChatWa opa={wa} />
-        <PetaLokasi buka={peta} />
-      </Hp>
-      {frame >= 48 && frame < 118 ? <Stiker teks="Chat WA: langsung kebuka" mulai={48} top={1560} /> : null}
-      {frame >= 140 ? <Stiker teks="Peta: lokasi pelanggan" mulai={140} top={1560} rot={2} warna={C.merah} tulisan="white" /> : null}
-      <Catatan tema="krem" />
+      <Catatan teks="Omset − modal − pengeluaran" mulai={120} top={1700} ukuran={44} />
+      <DataContoh />
     </Latar>
   );
 };
 
-/* ================= ADEGAN 7: BAYAR DAN STRUK ================= */
+/* ================= ADEGAN 6: BUKA LAPORAN ================= */
 
-const Bayar: React.FC = () => {
+const BukaLaporan: React.FC = () => {
   const frame = useCurrentFrame();
-  const kembali = interpolate(frame, [44, 70], [0, 56000], clamp);
-  const pilih = frame >= 40;
-  const tekanSelesai = frame >= 98 && frame < 108 ? 0.95 : 1;
-  const struk = ease(interpolate(frame, [118, 142], [0, 1], clamp));
-  const a = 1;
+  const tekan = interpolate(frame, [50, 58, 68], [0, 1, 0], clamp);
+  const laporan = ease(interpolate(frame, [66, 90], [0, 1], clamp));
   return (
-    <Latar tema="merah">
-      <Nomor n="4" teks="Bayar & kirim struk" tema="merah" />
-      <Hp atas={290}>
-        <div style={{position: 'absolute', inset: 0, opacity: a, visibility: a > 0.01 ? 'visible' : 'hidden', background: '#f4f7fe'}}>
-          <Header judul="Pembayaran" />
-          <div style={{padding: '24px 28px'}}>
-            <div style={{textAlign: 'center', fontSize: 26, color: C.abu, fontWeight: 700}}>Total Tagihan</div>
-            <div style={{textAlign: 'center', fontSize: 66, fontWeight: 900, color: C.gelap, marginBottom: 20}}>Rp 44.000</div>
-            <div style={{display: 'flex', gap: 14, marginBottom: 20}}>
-              <Tombol teks="Bayar Tunai" w={C.biru} />
-              <Tombol teks="Bayar via QRIS" w="white" tulisan={C.abu} />
-            </div>
-            <div style={{fontSize: 22, fontWeight: 800, color: '#2b2b2b', marginBottom: 8}}>Uang Diterima</div>
-            <div style={{display: 'flex', gap: 12, marginBottom: 14}}>
-              {['Uang Pas', '50.000', '100.000'].map((u) => (
-                <div key={u} style={{flex: 1, padding: '14px 0', textAlign: 'center', borderRadius: 14, fontSize: 25, fontWeight: 800, background: pilih && u === '100.000' ? C.biru : 'white', color: pilih && u === '100.000' ? 'white' : '#6b7a99', border: '2px solid #e3e8f3'}}>{u}</div>
+    <Latar>
+      <Nomor n="2" teks="Buka Laporan" />
+      <Hp>
+        <LayarDasbor laba={350000} laporanTekan={tekan} />
+        <div style={{position: 'absolute', inset: 0, background: '#f4f7fe', opacity: laporan, visibility: laporan > 0.01 ? 'visible' : 'hidden'}}>
+          <Header judul="Laporan Analitik" />
+        </div>
+      </Hp>
+      {frame >= 20 ? <Catatan teks="Menu Cepat > Laporan" mulai={20} /> : null}
+      <DataContoh />
+    </Latar>
+  );
+};
+
+/* ================= ADEGAN 7: PERIODE DAN KARTU ANGKA ================= */
+
+const PERIODE = [
+  {n: 'Harian', v: [1500000, 1150000, 350000, 64, '23.3%', 23438]},
+  {n: 'Mingguan', v: [9800000, 7600000, 2200000, 410, '22.4%', 23902]},
+  {n: 'Bulanan', v: [41200000, 32300000, 8900000, 1720, '21.6%', 23953]},
+  {n: 'Tahunan', v: [486000000, 381000000, 105000000, 20300, '21.6%', 23941]},
+];
+const LABEL = ['OMSET MASUK', 'PENGELUARAN', 'LABA BERSIH', 'TOTAL TRX', '% MARGIN LABA', 'RATA-RATA/TRX'];
+const WARNA_KPI = [C.biru, C.merah, C.hijau, '#8e2de2', C.oranye, '#00a8c0'];
+
+const Periode: React.FC = () => {
+  const frame = useCurrentFrame();
+  const idx = Math.min(3, Math.floor(frame / 52));
+  const mulai = idx * 52 + 4;
+  const p = PERIODE[idx];
+  return (
+    <Latar>
+      <Nomor n="2" teks="Pilih periode" />
+      <Hp>
+        <div style={{width: '100%', height: '100%', position: 'relative'}}>
+          <Header judul="Laporan Analitik" />
+          <div style={{padding: '24px'}}>
+            <div style={{display: 'flex', gap: 10, marginBottom: 22}}>
+              {PERIODE.map((t, i) => (
+                <div key={t.n} style={{flex: 1, textAlign: 'center', padding: '14px 0', borderRadius: 14, fontSize: 22, fontWeight: 800, background: i === idx ? C.biru : 'white', color: i === idx ? 'white' : '#8d99ae', border: i === idx ? '2px solid transparent' : '2px solid #e3e8f3'}}>{t.n}</div>
               ))}
             </div>
-            <div style={{borderRadius: 22, padding: '22px 26px', background: '#e8faf6', border: `2px solid ${C.hijau}`, opacity: pilih ? 1 : 0.25}}>
-              <div style={{fontSize: 24, fontWeight: 700, color: '#2b7a6f'}}>Kembalian</div>
-              <div style={{fontSize: 56, fontWeight: 900, color: C.hijau}}>Rp {titik(kembali)}</div>
-            </div>
-            <div style={{marginTop: 22, height: 84, borderRadius: 22, background: C.gelap, color: 'white', fontSize: 30, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `scale(${tekanSelesai})`}}>
-              Selesaikan &amp; Struk
-            </div>
-          </div>
-        </div>
-        <div style={{position: 'absolute', inset: 0, background: `rgba(15,32,39,${0.55 * struk})`, visibility: struk > 0.01 ? 'visible' : 'hidden'}}>
-          <div style={{position: 'absolute', left: 0, right: 0, bottom: 0, background: 'white', borderRadius: '34px 34px 0 0', padding: '30px 28px 36px', transform: `translateY(${(1 - struk) * 700}px)`}}>
-            <div style={{fontSize: 34, fontWeight: 900, color: C.gelap, textAlign: 'center', marginBottom: 6}}>Pembayaran Berhasil</div>
-            <div style={{fontSize: 22, color: C.abu, textAlign: 'center', marginBottom: 20}}>Struk Bu Sari: Rp 44.000</div>
-            <div style={{display: 'grid', gap: 14}}>
-              <Tombol teks="Cetak Bluetooth" w={C.gelap} />
-              <Tombol teks="Bagikan Gambar Struk" w="#25d366" />
-              <Tombol teks="Simpan ke Galeri" w="#eef2f9" tulisan="#6b7a99" />
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: 16}}>
+              {LABEL.map((l, i) => (
+                <div key={l} style={{width: 296, boxSizing: 'border-box', background: 'white', borderRadius: 22, padding: '20px 20px', borderTop: `8px solid ${WARNA_KPI[i]}`, boxShadow: '0 8px 24px rgba(15,32,39,0.07)'}}>
+                  <div style={{fontSize: 20, fontWeight: 800, color: WARNA_KPI[i]}}>{l}</div>
+                  <div style={{fontSize: 33, fontWeight: 900, color: C.gelap, marginTop: 8}}>
+                    {i === 4 ? p.v[4] : i === 3 ? <Angka nilai={Number(p.v[3])} mulai={mulai} durasi={26} awalan="" /> : <Angka nilai={Number(p.v[i])} mulai={mulai} durasi={26} />}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+          <NavBawah aktif={0} />
         </div>
       </Hp>
-      {frame < 114 ? <Stiker teks="Tunai atau QRIS, kayak biasa" mulai={20} top={1560} /> : <Stiker teks="Struk: cetak, kirim, atau simpan" mulai={128} top={1560} ukuran={46} />}
+      <Catatan teks={idx === 0 ? 'Harian' : idx === 1 ? 'Mingguan' : idx === 2 ? 'Bulanan' : 'Tahunan'} mulai={idx * 52 + 2} top={1560} rot={idx % 2 === 0 ? -2 : 2} />
+      <DataContoh />
     </Latar>
   );
 };
 
-/* ================= ADEGAN 8: SUDAH DIPROSES ================= */
+/* ================= ADEGAN 8: GRAFIK ================= */
 
-const Tanda: React.FC = () => {
-  const frame = useCurrentFrame();
-  const status = frame >= 30 ? 'proses' : 'baru';
+const Donat: React.FC<{p: number}> = ({p}) => {
+  const bagian = [
+    {n: 'Bahan', v: 62, w: C.merah},
+    {n: 'Kemasan', v: 14, w: C.oranye},
+    {n: 'Listrik', v: 10, w: C.biru},
+    {n: 'Ongkir', v: 8, w: C.hijau},
+    {n: 'Lain', v: 6, w: C.abu},
+  ];
+  const R = 70;
+  const K = 2 * Math.PI * R;
+  let acc = 0;
   return (
-    <Latar tema="krem">
-      <Hp atas={260}>
-        <LayarUtama badge={0} />
-        <SheetPesanan buka={1}>
-          <KartuPesanan status={status} />
-        </SheetPesanan>
+    <div style={{display: 'flex', alignItems: 'center', gap: 24}}>
+      <svg width="190" height="190" viewBox="0 0 190 190">
+        {bagian.map((b) => {
+          const panjang = (b.v / 100) * K * p;
+          const el = (
+            <circle key={b.n} cx="95" cy="95" r={R} fill="none" stroke={b.w} strokeWidth="34" strokeDasharray={`${panjang} ${K}`} strokeDashoffset={-acc * K * p / 100 * 1} transform="rotate(-90 95 95)" />
+          );
+          acc += b.v;
+          return el;
+        })}
+      </svg>
+      <div style={{display: 'grid', gap: 6}}>
+        {bagian.map((b) => (
+          <div key={b.n} style={{display: 'flex', alignItems: 'center', gap: 10, fontSize: 22, fontWeight: 700, color: C.gelap}}>
+            <span style={{width: 18, height: 18, borderRadius: 9, background: b.w, display: 'inline-block'}} />
+            {b.n} {b.v}%
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Grafik: React.FC = () => {
+  const frame = useCurrentFrame();
+  const geser = ease(interpolate(frame, [50, 170], [0, 1], clamp)) * 640;
+  const bar = [40, 55, 48, 70, 62, 85, 100];
+  const top5 = [
+    ['Kopi Susu Botol', 100],
+    ['Roti Tawar', 64],
+    ['Mie Goreng Instan', 41],
+    ['Air Mineral 600 ml', 35],
+    ['Es Teh Manis', 28],
+  ];
+  const kartu: React.CSSProperties = {background: 'white', borderRadius: 24, padding: '22px 24px', marginBottom: 20, boxShadow: '0 8px 24px rgba(15,32,39,0.07)'};
+  const judul: React.CSSProperties = {fontSize: 26, fontWeight: 900, color: C.gelap, marginBottom: 14};
+  const p1 = ease(interpolate(frame, [10, 50], [0, 1], clamp));
+  const p2 = ease(interpolate(frame, [60, 100], [0, 1], clamp));
+  const p3 = ease(interpolate(frame, [100, 140], [0, 1], clamp));
+  const p4 = ease(interpolate(frame, [140, 180], [0, 1], clamp));
+  return (
+    <Latar>
+      <Pil teks="GRAFIK" />
+      <Hp>
+        <div style={{width: '100%', height: '100%', position: 'relative'}}>
+          <Header judul="Laporan Analitik" />
+          <div style={{padding: 24, transform: `translateY(${-geser}px)`}}>
+            <div style={kartu}>
+              <div style={judul}>Tren Pendapatan</div>
+              <div style={{display: 'flex', alignItems: 'flex-end', gap: 14, height: 170}}>
+                {bar.map((h, i) => (
+                  <div key={i} style={{flex: 1, height: h * 1.6 * p1, background: i === 6 ? C.hijau : C.biru, borderRadius: 8}} />
+                ))}
+              </div>
+            </div>
+            <div style={kartu}>
+              <div style={judul}>Omset vs Laba</div>
+              {[
+                ['Omset', 1500000, C.biru],
+                ['Laba', 350000, C.hijau],
+              ].map(([n, v, w]) => (
+                <div key={String(n)} style={{display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10}}>
+                  <div style={{width: 90, fontSize: 22, fontWeight: 800, color: '#6b7a99'}}>{n}</div>
+                  <div style={{height: 36, width: (Number(v) / 1500000) * 440 * p2, background: String(w), borderRadius: 8}} />
+                </div>
+              ))}
+            </div>
+            <div style={kartu}>
+              <div style={judul}>Pengeluaran per Kategori</div>
+              <Donat p={p3} />
+            </div>
+            <div style={kartu}>
+              <div style={judul}>Top 5 Terlaris</div>
+              {top5.map(([n, v], i) => (
+                <div key={String(n)} style={{display: 'flex', justifyContent: 'space-between', fontSize: 24, fontWeight: 700, color: C.gelap, padding: '8px 0', borderBottom: '1px solid #eee', opacity: p4}}>
+                  <span>{i + 1}. {n}</span>
+                  <span style={{color: C.hijau}}>{v} terjual</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </Hp>
-      <Stiker teks="Ditandai. Nggak ada yang kelewat!" mulai={32} top={1520} ukuran={50} warna={C.merah} tulisan="white" />
-      <Catatan tema="krem" />
+      {frame < 56 ? <Catatan teks="Tren pendapatan" mulai={8} /> : frame < 104 ? <Catatan teks="Omset vs laba" mulai={58} rot={2} /> : frame < 150 ? <Catatan teks="Pengeluaran per kategori" mulai={106} /> : <Catatan teks="5 produk terlaris" mulai={152} rot={2} />}
+      <DataContoh />
     </Latar>
   );
 };
 
-/* ================= ADEGAN 9: TIPS BAGIKAN LINK TOKO ================= */
+/* ================= ADEGAN 9: RINCIAN TRANSAKSI ================= */
 
-const Tips: React.FC = () => {
+const Rincian: React.FC = () => {
   const frame = useCurrentFrame();
-  const linkTekan = frame >= 30 && frame < 42 ? 1 : 0;
-  const toast = interpolate(frame, [44, 56, 104, 116], [0, 1, 1, 0], clamp);
+  const f = frame < 30 ? 0 : frame < 60 ? 1 : 2;
+  const semua = [
+    ['Penjualan #A1', '+Rp 44.000', true],
+    ['Kemasan', '-Rp 50.000', false],
+    ['Penjualan #A2', '+Rp 28.500', true],
+    ['Transport/ongkir', '-Rp 60.000', false],
+  ];
+  const tampil = semua.filter((r) => f === 0 || (f === 1 && r[2]) || (f === 2 && !r[2]));
   return (
-    <Latar tema="merah">
-      <Pil teks="TIPS" kuning />
+    <Latar>
+      <Pil teks="RINCIAN TRANSAKSI" />
       <Hp atas={290}>
-        <LayarUtama badge={0} linkTekan={linkTekan} />
-        <div style={{position: 'absolute', left: 80, right: 80, bottom: 130, padding: '20px 0', borderRadius: 40, background: C.hijau, color: 'white', fontSize: 30, fontWeight: 800, textAlign: 'center', opacity: toast, transform: `translateY(${(1 - toast) * 60}px)`}}>
-          Link toko disalin
+        <div style={{width: '100%', height: '100%', position: 'relative'}}>
+          <Header judul="Laporan Analitik" />
+          <div style={{padding: 24}}>
+            <div style={{fontSize: 28, fontWeight: 900, color: C.gelap, marginBottom: 14}}>Rincian Transaksi</div>
+            <div style={{display: 'flex', gap: 12, marginBottom: 20}}>
+              {['Semua', 'Masuk', 'Keluar'].map((t, i) => (
+                <div key={t} style={{flex: 1, textAlign: 'center', padding: '14px 0', borderRadius: 14, fontSize: 24, fontWeight: 800, background: i === f ? C.biru : 'white', color: i === f ? 'white' : '#8d99ae', border: i === f ? '2px solid transparent' : '2px solid #e3e8f3'}}>{t}</div>
+              ))}
+            </div>
+            {tampil.map((r) => (
+              <div key={String(r[0])} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', borderRadius: 20, padding: '22px 24px', marginBottom: 14, boxShadow: '0 8px 24px rgba(15,32,39,0.07)'}}>
+                <span style={{fontSize: 28, fontWeight: 800, color: C.gelap}}>{String(r[0])}</span>
+                <span style={{fontSize: 30, fontWeight: 900, color: r[2] ? C.hijau : C.merah}}>{String(r[1])}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </Hp>
-      <Stiker teks="Bagikan link ke pelanggan" mulai={20} top={1560} />
-      <Stiker teks="Pesanan makin banyak" mulai={64} top={1730} rot={2} warna="white" ukuran={42} />
+      <Catatan teks="Saring: masuk atau keluar" mulai={8} top={1560} ukuran={46} />
+      <DataContoh />
     </Latar>
   );
 };
@@ -856,51 +725,17 @@ const Ajakan: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const logo = spring({frame: frame - 2, fps, config: {damping: 9}});
-  const pil = spring({frame: frame - 36, fps, config: {damping: 8}});
+  const pil = spring({frame: frame - 44, fps, config: {damping: 8}});
   return (
-    <Latar tema="merah">
-      <div
-        style={{
-          position: 'absolute',
-          left: 340,
-          top: 230,
-          width: 400,
-          height: 400,
-          borderRadius: 96,
-          background: 'white',
-          padding: 40,
-          boxSizing: 'border-box',
-          border: `8px solid ${C.tinta}`,
-          boxShadow: `14px 14px 0 ${C.tinta}`,
-          transform: `scale(${logo}) rotate(${(1 - logo) * -18}deg)`,
-        }}
-      >
+    <Latar>
+      <div style={{position: 'absolute', left: 340, top: 230, width: 400, height: 400, borderRadius: 96, background: 'white', padding: 40, boxSizing: 'border-box', border: `8px solid ${C.tinta}`, boxShadow: `14px 14px 0 ${C.tinta}`, transform: `scale(${logo}) rotate(${(1 - logo) * -18}deg)`}}>
         <Img src={staticFile('logo.png')} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
       </div>
       <div style={posisi(740)}>
-        <Teks tema="merah" kata={['Terima', 'pesanan', 'jadi', 'gampang']} sorot={[3]} ukuran={96} mulai={6} jeda={4} />
+        <Teks kata={['Tahu', 'untung', 'yang', 'sebenarnya']} sorot={[1, 3]} ukuran={92} mulai={8} jeda={4} />
       </div>
-      <div style={{...posisi(1080), textAlign: 'center', fontSize: 52, fontWeight: 800, color: 'white'}}>Kasir &amp; Katalog UMKM</div>
-      <div
-        style={{
-          position: 'absolute',
-          top: 1230,
-          left: 190,
-          width: 700,
-          height: 140,
-          borderRadius: 70,
-          background: C.kuning,
-          color: C.tinta,
-          border: `7px solid ${C.tinta}`,
-          boxShadow: `10px 10px 0 ${C.tinta}`,
-          fontSize: 56,
-          fontWeight: 900,
-          textAlign: 'center',
-          lineHeight: '126px',
-          boxSizing: 'border-box',
-          transform: `scale(${pil})`,
-        }}
-      >
+      <div style={{...posisi(1090), textAlign: 'center', fontSize: 52, fontWeight: 800, color: C.tinta}}>Kasir &amp; Katalog UMKM</div>
+      <div style={{position: 'absolute', top: 1240, left: 190, width: 700, height: 140, borderRadius: 70, background: C.merah, color: 'white', border: `7px solid ${C.tinta}`, boxShadow: `10px 10px 0 ${C.tinta}`, fontSize: 56, fontWeight: 900, textAlign: 'center', lineHeight: '126px', boxSizing: 'border-box', transform: `scale(${pil})`}}>
         Unduh di Play Store
       </div>
     </Latar>
@@ -910,16 +745,16 @@ const Ajakan: React.FC = () => {
 /* ================= RANGKAIAN ================= */
 
 export const Video: React.FC = () => (
-  <AbsoluteFill style={{background: C.merah}}>
+  <AbsoluteFill style={{background: C.kertas}}>
     <Adegan dari={DARI[0]} durasi={D[0]}><Hook /></Adegan>
-    <Adegan dari={DARI[1]} durasi={D[1]}><Dari /></Adegan>
-    <Adegan dari={DARI[2]} durasi={D[2]}><Masuk /></Adegan>
-    <Adegan dari={DARI[3]} durasi={D[3]}><Baca /></Adegan>
-    <Adegan dari={DARI[4]} durasi={D[4]}><Proses /></Adegan>
-    <Adegan dari={DARI[5]} durasi={D[5]}><WaPeta /></Adegan>
-    <Adegan dari={DARI[6]} durasi={D[6]}><Bayar /></Adegan>
-    <Adegan dari={DARI[7]} durasi={D[7]}><Tanda /></Adegan>
-    <Adegan dari={DARI[8]} durasi={D[8]}><Tips /></Adegan>
+    <Adegan dari={DARI[1]} durasi={D[1]}><Sebab /></Adegan>
+    <Adegan dari={DARI[2]} durasi={D[2]}><CatatKeluar /></Adegan>
+    <Adegan dari={DARI[3]} durasi={D[3]}><Kategori /></Adegan>
+    <Adegan dari={DARI[4]} durasi={D[4]}><LabaBerubah /></Adegan>
+    <Adegan dari={DARI[5]} durasi={D[5]}><BukaLaporan /></Adegan>
+    <Adegan dari={DARI[6]} durasi={D[6]}><Periode /></Adegan>
+    <Adegan dari={DARI[7]} durasi={D[7]}><Grafik /></Adegan>
+    <Adegan dari={DARI[8]} durasi={D[8]}><Rincian /></Adegan>
     <Adegan dari={DARI[9]} durasi={D[9]}><Ajakan /></Adegan>
     <Progres />
   </AbsoluteFill>
